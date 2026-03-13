@@ -28,9 +28,26 @@ export function showToast(message, type = 'success') {
     }, 2000);
 }
 
+// دالة إظهار نافذة منبثقة (Modal)
+export function showModal(modalId, content) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
+    // نضع المحتوى في العنصر المناسب داخل المودال
+    const contentDiv = modal.querySelector('.modal-content');
+    if (contentDiv) {
+        contentDiv.innerHTML = content;
+    } else {
+        modal.innerHTML = content;
+    }
+    modal.style.display = 'flex';
+}
+
 // دالة إغلاق النوافذ المنبثقة
-export function closeModal(id) {
-    const modal = document.getElementById(id);
+export function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
 }
 
@@ -47,5 +64,6 @@ export function getTodayDate() {
 
 // ربط الدوال بـ window لتكون متاحة في الأحداث المضمنة (onclick)
 window.showToast = showToast;
+window.showModal = showModal;
 window.closeModal = closeModal;
 window.formatCurrency = formatCurrency;
