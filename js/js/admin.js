@@ -342,3 +342,140 @@ window.showAdminAccounts = function() {
 window.showTwoFactor = function() {
     showToast('🚧 الحقوق بخطوتين قيد التطوير', 'info');
 };
+// ==================== دوال إضافية للإحصائيات الرئيسية ====================
+
+// دالة لحساب إجمالي المبيعات
+async function calculateTotalSales() {
+    const ordersSnap = await getDocs(collection(db, 'orders'));
+    let total = 0;
+    ordersSnap.forEach(doc => {
+        total += doc.data().price || 0;
+    });
+    return total;
+}
+
+// دالة لحساب إجمالي التكلفة (مفترض أن لديك حقل cost في orders أو منتجات)
+async function calculateTotalCost() {
+    // إذا كان لديك حقل cost في كل طلب، استخدمه. وإلا يمكنك حسابه من المنتجات
+    const productsData = loadStoreData(); // من store-data.js
+    let totalCost = 0;
+    // هذا مثال، يمكن تعديله حسب هيكل بياناتك
+    return totalCost;
+}
+
+// دالة لحساب الأرباح الصافية (إجمالي المبيعات - التكلفة)
+async function calculateNetProfit() {
+    const totalSales = await calculateTotalSales();
+    const totalCost = await calculateTotalCost();
+    return totalSales - totalCost;
+}
+
+// دالة لحساب إجمالي المبلغ المدين (إذا كان لديك حقل debtBalance في users)
+async function calculateTotalDebt() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    let totalDebt = 0;
+    usersSnap.forEach(doc => {
+        totalDebt += doc.data().debtBalance || 0;
+    });
+    return totalDebt;
+}
+
+// دالة لحساب عدد الطلبات هذا الشهر
+async function calculateMonthlyOrders() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const q = query(
+        collection(db, 'orders'),
+        where('createdAt', '>=', startOfMonth.toISOString()),
+        where('createdAt', '<=', endOfMonth.toISOString())
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+}
+
+// دالة لحساب عدد الطلبات قيد الانتظار
+async function calculatePendingOrders() {
+    const q = query(collection(db, 'orders'), where('status', '==', 'pending'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+}
+
+// دالة لحساب عدد المنتجات النشطة (من store-data.js)
+function calculateActiveProducts() {
+    const storeData = loadStoreData();
+    let count = 0;
+    storeData.sections.forEach(section => {
+        section.categories.forEach(category => {
+            count += category.products.length;
+        });
+    });
+    return count;
+}
+
+// دالة لحساب عدد المستخدمين
+async function calculateTotalUsers() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    return usersSnap.size;
+}
+
+// دالة لحساب إجمالي رصيد المستخدمين
+async function calculateTotalUserBalance() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    let total = 0;
+    usersSnap.forEach(doc => {
+        total += doc.data().walletBalance || 0;
+    });
+    return total;
+}
+
+// دالة لحساب عدد طلبات الشحن المعالجة (مكتملة)
+async function calculateProcessedCharges() {
+    const q = query(collection(db, 'charges'), where('status', '==', 'completed'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+}
+
+// دالة لحساب عدد المستخدمين المسموح لهم برصيد مدين (إذا كان لديك حقل allowedDebt)
+async function calculateAllowedDebtUsers() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    let count = 0;
+    usersSnap.forEach(doc => {
+        if (doc.data().allowedDebt) count++;
+    });
+    return count;
+}
+
+// دالة رئيسية لتحديث جميع البطاقات في الصفحة الرئيسية
+export async function updateDashboardCards() {
+    document.getElementById('totalSales').textContent = (await calculateTotalSales()).toFixed(2) + '$';
+    document.getElementById('totalCost').textContent = (await calculateTotalCost()).toFixed(2) + '$';
+    document.getElementById('netProfit').textContent = (await calculateNetProfit()).toFixed(2) + '$';
+    document.getElementById('totalDebt').textContent = (await calculateTotalDebt()).toFixed(2) + '$';
+    document.getElementById('monthlyOrders').textContent = await calculateMonthlyOrders();
+    document.getElementById('pendingOrders').textContent = await calculatePendingOrders();
+    document.getElementById('activeProducts').textContent = calculateActiveProducts();
+    document.getElementById('totalUsers').textContent = await calculateTotalUsers();
+    document.getElementById('totalUserBalance').textContent = (await calculateTotalUserBalance()).toFixed(2) + '$';
+    document.getElementById('processedCharges').textContent = await calculateProcessedCharges();
+    document.getElementById('allowedDebtUsers').textContent = await calculateAllowedDebtUsers();
+    document.getElementById('totalOrdersCount').textContent = (await getDocs(collection(db, 'orders'))).size;
+    
+    // تحديث نطاق الشهر (اختياري)
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    document.getElementById('monthRange').textContent = 
+        `${lastDay.toLocaleDateString()} – ${firstDay.toLocaleDateString()}`;
+}
+
+// تعديل دالة loadAdminDashboard لتشمل تحديث البطاقات
+window.loadAdminDashboard = async function() {
+    await updateDashboardCards();
+    loadAdminProducts();
+    loadAdminOrders();
+    loadAdminCharges();
+    loadAdminUsers();
+    loadAdminStats();
+};
