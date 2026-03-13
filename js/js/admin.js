@@ -272,3 +272,73 @@ async function loadAdminStats() {
 
 // استدعاء loadAdminDashboard عند تحميل الصفحة (إذا كنا في dashboard.html)
 // سيتم استدعاؤها من dashboard.js أو من HTML مباشرة
+// دالة لفتح نافذة منبثقة لإدارة طرق الدفع
+window.showPaymentMethods = function() {
+    // يمكن استخدام modal موجود أو إنشاء modal جديد
+    showToast('🚧 إدارة طرق الدفع قيد التطوير', 'info');
+};
+
+// دالة لإدارة العملات
+window.showCurrencies = function() {
+    showToast('🚧 إدارة العملات قيد التطوير', 'info');
+};
+
+// دالة لإدارة نسبة ربح VIP
+window.showVipProfit = function() {
+    showToast('🚧 نسبة ربح VIP قيد التطوير', 'info');
+};
+
+// دالة لعرض سجل الأرباح
+window.showProfitLog = function() {
+    showToast('🚧 سجل الأرباح قيد التطوير', 'info');
+};
+
+// دالة لإدارة الرصيد المدين
+window.showDebtBalance = function() {
+    showToast('🚧 الرصيد المدين قيد التطوير', 'info');
+};
+
+// دالة لعرض المستخدمين الأكثر صرفاً
+window.showTopSpenders = function() {
+    showToast('🚧 المستخدمون الأكثر صرفاً قيد التطوير', 'info');
+};
+
+// دالة لإدارة الدولاء (العملاء المميزين)
+window.showVipUsers = function() {
+    showToast('🚧 إدارة الدولاء قيد التطوير', 'info');
+};
+
+// دالة لإدارة الإجالات (الإحالات)
+window.showReferrals = function() {
+    showToast('🚧 الإجالات قيد التطوير', 'info');
+};
+
+// دالة لإدارة التصميم
+window.showDesign = function() {
+    showToast('🚧 إدارة التصميم قيد التطوير', 'info');
+};
+
+// دالة لإدارة رسائل الطلب والردود
+window.showOrderMessages = function() {
+    showToast('🚧 رسائل الطلب والردود قيد التطوير', 'info');
+};
+
+// دالة لإدارة الترتيب
+window.showOrderManagement = function() {
+    showToast('🚧 إدارة الترتيب قيد التطوير', 'info');
+};
+
+// دالة لإدارة وسائل التواصل
+window.showContactMethods = function() {
+    showToast('🚧 وسائل التواصل قيد التطوير', 'info');
+};
+
+// دالة لإدارة حسابات الإدارة
+window.showAdminAccounts = function() {
+    showToast('🚧 حسابات الإدارة قيد التطوير', 'info');
+};
+
+// دالة لإدارة الحقوق بخطوتين (2FA)
+window.showTwoFactor = function() {
+    showToast('🚧 الحقوق بخطوتين قيد التطوير', 'info');
+};
