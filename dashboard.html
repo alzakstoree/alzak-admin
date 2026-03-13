@@ -7,236 +7,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* تنسيقات إضافية خاصة بلوحة التحكم */
-        body {
-            background: #0a0a0a;
-            padding: 0;
-            margin: 0;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        .dashboard-container {
-            padding: 20px;
-        }
-        /* الهيدر */
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: #111;
-            padding: 15px 20px;
-            border-radius: 15px;
-            border: 2px solid #333;
-        }
-        .admin-header h2 {
-            color: #fbbf24;
-            font-size: 24px;
-        }
-        .admin-header h2 i {
-            margin-left: 10px;
-        }
-        /* القائمة الجانبية (مضمنة في style.css، لكن نضيف بعض التحسينات) */
-        .side-menu {
-            background: #111;
-            border-left: 2px solid #fbbf24;
-        }
-        .menu-items a i {
-            color: #fbbf24;
-        }
-        .menu-items a:hover {
-            background: #fbbf24;
-            color: #000;
-        }
-        .menu-items a:hover i {
-            color: #000;
-        }
-        /* شارة API */
-        .api-badge {
-            background: #fbbf24;
-            color: #000;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 12px;
-            margin-right: auto;
-            font-weight: 700;
-        }
-        /* بطاقات الإحصائيات */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .stat-card {
-            background: #111;
-            border: 2px solid #333;
-            border-radius: 20px;
-            padding: 20px 15px;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card:hover {
-            border-color: #fbbf24;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.2);
-        }
-        .stat-icon {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            font-size: 40px;
-            color: rgba(251, 191, 36, 0.1);
-        }
-        .stat-content {
-            position: relative;
-            z-index: 1;
-        }
-        .stat-title {
-            color: #888;
-            font-size: 13px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .stat-title i {
-            color: #fbbf24;
-            font-size: 16px;
-        }
-        .stat-value {
-            font-size: 28px;
-            font-weight: 900;
-            color: #fbbf24;
-            margin-bottom: 5px;
-            line-height: 1.2;
-        }
-        .stat-sub {
-            font-size: 12px;
-            color: #666;
-        }
-        .stat-footer {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .stat-link {
-            color: #fbbf24;
-            text-decoration: none;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .stat-link:hover {
-            color: #fff;
-        }
-        /* بطاقة وضع الصيانة */
-        .maintenance-card {
-            background: #111;
-            border: 2px solid #ef4444;
-            border-radius: 20px;
-            padding: 20px 15px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .maintenance-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .maintenance-info i {
-            font-size: 30px;
-            color: #ef4444;
-        }
-        .maintenance-text h4 {
-            color: #ef4444;
-            margin-bottom: 5px;
-        }
-        .maintenance-text p {
-            color: #888;
-            font-size: 12px;
-        }
-        .maintenance-toggle {
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            border-radius: 30px;
-            padding: 10px 25px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .maintenance-toggle:hover {
-            background: #dc2626;
-        }
-        /* صفوف البطاقات */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        @media (max-width: 480px) {
-            .stats-row {
-                grid-template-columns: 1fr;
-            }
-        }
-        /* تبويبات الإدارة */
-        .admin-tabs {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        .tab-btn {
-            flex: 1;
-            min-width: 70px;
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 12px 5px;
-            border-radius: 30px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .tab-btn.active {
-            background: #fbbf24;
-            color: #000;
-            font-weight: 700;
-        }
-        .admin-tab-content {
-            display: none;
-        }
-        .admin-tab-content.active {
-            display: block;
-        }
-        /* التوست */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            background: #111;
-            border: 2px solid #fbbf24;
-            padding: 15px;
-            border-radius: 30px;
-            text-align: center;
-            transform: translateY(200%);
-            transition: 0.3s;
-            z-index: 10001;
-        }
-        .toast.show {
-            transform: translateY(0);
-        }
+        /* (نفس التنسيقات السابقة) */
+        body { background: #0a0a0a; padding: 0; margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        .dashboard-container { padding: 20px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #111; padding: 15px 20px; border-radius: 15px; border: 2px solid #333; }
+        .admin-header h2 { color: #fbbf24; font-size: 24px; }
+        .admin-header h2 i { margin-left: 10px; }
+        .side-menu { background: #111; border-left: 2px solid #fbbf24; }
+        .menu-items a i { color: #fbbf24; }
+        .menu-items a:hover { background: #fbbf24; color: #000; }
+        .menu-items a:hover i { color: #000; }
+        .api-badge { background: #fbbf24; color: #000; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-right: auto; font-weight: 700; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .stat-card { background: #111; border: 2px solid #333; border-radius: 20px; padding: 20px 15px; transition: 0.3s; position: relative; overflow: hidden; }
+        .stat-card:hover { border-color: #fbbf24; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(251, 191, 36, 0.2); }
+        .stat-icon { position: absolute; top: 15px; left: 15px; font-size: 40px; color: rgba(251, 191, 36, 0.1); }
+        .stat-content { position: relative; z-index: 1; }
+        .stat-title { color: #888; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .stat-title i { color: #fbbf24; font-size: 16px; }
+        .stat-value { font-size: 28px; font-weight: 900; color: #fbbf24; margin-bottom: 5px; line-height: 1.2; }
+        .stat-sub { font-size: 12px; color: #666; }
+        .stat-footer { margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .stat-link { color: #fbbf24; text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 3px; transition: 0.2s; cursor: pointer; }
+        .stat-link:hover { color: #fff; }
+        .maintenance-card { background: #111; border: 2px solid #ef4444; border-radius: 20px; padding: 20px 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .maintenance-info { display: flex; align-items: center; gap: 15px; }
+        .maintenance-info i { font-size: 30px; color: #ef4444; }
+        .maintenance-text h4 { color: #ef4444; margin-bottom: 5px; }
+        .maintenance-text p { color: #888; font-size: 12px; }
+        .maintenance-toggle { background: #ef4444; color: #fff; border: none; border-radius: 30px; padding: 10px 25px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .maintenance-toggle:hover { background: #dc2626; }
+        .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
+        @media (max-width: 480px) { .stats-row { grid-template-columns: 1fr; } }
+        .admin-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
+        .tab-btn { flex: 1; min-width: 70px; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 12px 5px; border-radius: 30px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: #fbbf24; color: #000; font-weight: 700; }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
+        .toast { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #111; border: 2px solid #fbbf24; padding: 15px; border-radius: 30px; text-align: center; transform: translateY(200%); transition: 0.3s; z-index: 10001; }
+        .toast.show { transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -268,11 +77,11 @@
         <div class="menu-section">
             <div class="menu-section-title">المالية</div>
             <ul class="menu-items">
-                <li><a href="#" onclick="showComingSoon('طرق الدفع')"><i class="fas fa-credit-card"></i> طرق الدفع <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('طلبات الشحن')"><i class="fas fa-money-bill-wave"></i> طلبات الشحن</a></li>
-                <li><a href="#" onclick="showComingSoon('نسبة ربح VIP')"><i class="fas fa-percent"></i> نسبة ربح VIP</a></li>
-                <li><a href="#" onclick="showComingSoon('العملات')"><i class="fas fa-coins"></i> العملات</a></li>
-                <li><a href="#" onclick="showComingSoon('سجل الأرباح')"><i class="fas fa-chart-line"></i> سجل الأرباح</a></li>
+                <li><a href="#" onclick="showPaymentMethods()"><i class="fas fa-credit-card"></i> طرق الدفع <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showAdminTab('charges')"><i class="fas fa-money-bill-wave"></i> طلبات الشحن</a></li>
+                <li><a href="#" onclick="showVipProfit()"><i class="fas fa-percent"></i> نسبة ربح VIP</a></li>
+                <li><a href="#" onclick="showCurrencies()"><i class="fas fa-coins"></i> العملات</a></li>
+                <li><a href="#" onclick="showProfitLog()"><i class="fas fa-chart-line"></i> سجل الأرباح</a></li>
             </ul>
         </div>
 
@@ -280,11 +89,11 @@
         <div class="menu-section">
             <div class="menu-section-title">المستخدمون</div>
             <ul class="menu-items">
-                <li><a href="#" onclick="showComingSoon('إدارة المستخدمين')"><i class="fas fa-users-cog"></i> إدارة المستخدمين</a></li>
-                <li><a href="#" onclick="showComingSoon('الرصيد المدين')"><i class="fas fa-hand-holding-usd"></i> الرصيد المدين</a></li>
-                <li><a href="#" onclick="showComingSoon('المستخدمون الأكثر صرفاً')"><i class="fas fa-trophy"></i> المستخدمون الأكثر صرفاً</a></li>
-                <li><a href="#" onclick="showComingSoon('الدولاء')"><i class="fas fa-star"></i> الدولاء</a></li>
-                <li><a href="#" onclick="showComingSoon('الإجالات')"><i class="fas fa-share-alt"></i> الإجالات</a></li>
+                <li><a href="#" onclick="showAdminTab('users')"><i class="fas fa-users-cog"></i> إدارة المستخدمين</a></li>
+                <li><a href="#" onclick="showDebtBalance()"><i class="fas fa-hand-holding-usd"></i> الرصيد المدين</a></li>
+                <li><a href="#" onclick="showTopSpenders()"><i class="fas fa-trophy"></i> المستخدمون الأكثر صرفاً</a></li>
+                <li><a href="#" onclick="showVipUsers()"><i class="fas fa-star"></i> الدولاء</a></li>
+                <li><a href="#" onclick="showReferrals()"><i class="fas fa-share-alt"></i> الإجالات</a></li>
             </ul>
         </div>
 
@@ -292,12 +101,12 @@
         <div class="menu-section">
             <div class="menu-section-title">الإدارة</div>
             <ul class="menu-items">
-                <li><a href="#" onclick="showComingSoon('التصميم')"><i class="fas fa-paint-brush"></i> التصميم <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('رسائل الطلب والردود')"><i class="fas fa-envelope"></i> رسائل الطلب والردود <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('إدارة الترتيب')"><i class="fas fa-sort-amount-up"></i> إدارة الترتيب <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('وسائل التواصل')"><i class="fas fa-phone-alt"></i> وسائل التواصل <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('حسابات الإدارة')"><i class="fas fa-user-shield"></i> حسابات الإدارة <span class="api-badge">API</span></a></li>
-                <li><a href="#" onclick="showComingSoon('الحقوق بخطوتين')"><i class="fas fa-lock"></i> الحقوق بخطوتين <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showDesign()"><i class="fas fa-paint-brush"></i> التصميم <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showOrderMessages()"><i class="fas fa-envelope"></i> رسائل الطلب والردود <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showOrderManagement()"><i class="fas fa-sort-amount-up"></i> إدارة الترتيب <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showContactMethods()"><i class="fas fa-phone-alt"></i> وسائل التواصل <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showAdminAccounts()"><i class="fas fa-user-shield"></i> حسابات الإدارة <span class="api-badge">API</span></a></li>
+                <li><a href="#" onclick="showTwoFactor()"><i class="fas fa-lock"></i> الحقوق بخطوتين <span class="api-badge">API</span></a></li>
             </ul>
         </div>
 
@@ -317,7 +126,7 @@
             <!-- تم إخفاء معلومات المستخدم (نحن لا نستخدم تسجيل دخول) -->
         </div>
 
-        <!-- صف البطاقات الأساسي (إجمالي المبيعات، التكلفة الكلية، الأرباح الصافية) -->
+        <!-- صف البطاقات الأساسي -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
@@ -357,7 +166,7 @@
             <button class="maintenance-toggle" onclick="toggleMaintenance()">تفعيل وضع الصيانة</button>
         </div>
 
-        <!-- صف ثاني: إجمالي المبلغ المدين + عدد الطلبات هذا الشهر -->
+        <!-- صف ثاني -->
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-content">
@@ -377,7 +186,7 @@
             </div>
         </div>
 
-        <!-- صف ثالث: الطلبات قيد الانتظار، المنتجات النشطة، عدد المستخدمين، إجمالي رصيد المستخدمين -->
+        <!-- صف ثالث -->
         <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="stat-card">
                 <div class="stat-content">
@@ -411,7 +220,7 @@
             </div>
         </div>
 
-        <!-- صف رابع: طلبات شحن معالجة، المستخدمون المسموح لهم برصيد مدين، عدد الطلبات -->
+        <!-- صف رابع -->
         <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-card">
                 <div class="stat-content">
@@ -439,7 +248,7 @@
             </div>
         </div>
 
-        <!-- تبويبات الإدارة (المنتجات، الطلبات، طلبات الشحن، العملاء، الإحصائيات) -->
+        <!-- تبويبات الإدارة -->
         <div style="margin-top: 30px;">
             <div class="admin-tabs">
                 <button class="tab-btn active" onclick="showAdminTab('products')">المنتجات</button>
@@ -493,25 +302,85 @@
             }
         };
 
-        // دالة showAdminTab (يجب أن تكون متاحة للأزرار)
+        // دالة showAdminTab (معدلة لتعمل بدون event)
         window.showAdminTab = function(tab) {
-            // تفعيل التبويب المحدد
+            // إزالة active من جميع الأزرة والمحتويات
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-            // نضبط active للتبويب الذي نقر عليه
-            event.target.classList.add('active');
+            
+            // تفعيل التبويب المحدد
+            const buttons = document.querySelectorAll('.tab-btn');
+            for (let btn of buttons) {
+                if (btn.textContent.includes(tab === 'products' ? 'المنتجات' :
+                                             tab === 'orders' ? 'الطلبات' :
+                                             tab === 'charges' ? 'طلبات الشحن' :
+                                             tab === 'users' ? 'العملاء' : 'الإحصائيات')) {
+                    btn.classList.add('active');
+                    break;
+                }
+            }
             document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
         };
 
-        // بعد تحميل الصفحة، نقوم بتحميل البيانات من admin.js إذا كانت موجودة
+        // ===== دوال جديدة للقائمة الجانبية (يمكن نقلها إلى admin.js) =====
+        window.showPaymentMethods = function() {
+            showComingSoon('طرق الدفع');
+        };
+        window.showVipProfit = function() {
+            showComingSoon('نسبة ربح VIP');
+        };
+        window.showCurrencies = function() {
+            showComingSoon('العملات');
+        };
+        window.showProfitLog = function() {
+            showComingSoon('سجل الأرباح');
+        };
+        window.showDebtBalance = function() {
+            showComingSoon('الرصيد المدين');
+        };
+        window.showTopSpenders = function() {
+            showComingSoon('المستخدمون الأكثر صرفاً');
+        };
+        window.showVipUsers = function() {
+            showComingSoon('الدولاء');
+        };
+        window.showReferrals = function() {
+            showComingSoon('الإجالات');
+        };
+        window.showDesign = function() {
+            showComingSoon('التصميم');
+        };
+        window.showOrderMessages = function() {
+            showComingSoon('رسائل الطلب والردود');
+        };
+        window.showOrderManagement = function() {
+            showComingSoon('إدارة الترتيب');
+        };
+        window.showContactMethods = function() {
+            showComingSoon('وسائل التواصل');
+        };
+        window.showAdminAccounts = function() {
+            showComingSoon('حسابات الإدارة');
+        };
+        window.showTwoFactor = function() {
+            showComingSoon('الحقوق بخطوتين');
+        };
+
+        // دالة تحميل لوحة التحكم (تستدعي دوال admin.js إذا كانت موجودة)
+        window.loadAdminDashboard = function() {
+            if (typeof loadAdminProducts === 'function') loadAdminProducts();
+            if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            if (typeof loadAdminCharges === 'function') loadAdminCharges();
+            if (typeof loadAdminUsers === 'function') loadAdminUsers();
+            if (typeof loadAdminStats === 'function') loadAdminStats();
+        };
+
+        // بعد تحميل الصفحة، نقوم بتحميل البيانات
         window.addEventListener('load', () => {
-            // محاولة استدعاء دالة تحميل لوحة التحكم من admin.js
             if (typeof window.loadAdminDashboard === 'function') {
                 window.loadAdminDashboard();
             } else {
-                // إذا لم تكن موجودة، يمكننا محاولة استدعاء دوال التحميل مباشرة
                 console.warn('loadAdminDashboard غير موجودة. تأكد من تحميل admin.js');
-                // يمكننا هنا استدعاء دوال فردية إذا أردنا
             }
         });
     </script>
