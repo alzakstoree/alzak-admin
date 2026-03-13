@@ -1,17 +1,61 @@
 // ==================== دوال لوحة المدير (بدون Firebase) ====================
 
-// دالة التحقق من تسجيل الدخول (تستخدم المتغير العام adminLogged)
+// ---------- دوال تسجيل الدخول ----------
+const ADMIN_PASSWORD = "123456"; // غيرها لكلمة مرور قوية
+
+// التحقق من حالة تسجيل الدخول عند تحميل الصفحة
+(function() {
+    if (localStorage.getItem('adminLogged') === 'yes') {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        showAdminTab('products'); // افتح المنتجات افتراضياً
+    }
+})();
+
+// دالة تسجيل الدخول
+window.checkPassword = function() {
+    const pass = document.getElementById('adminPassword').value;
+    if (pass === ADMIN_PASSWORD) {
+        localStorage.setItem('adminLogged', 'yes');
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        showToast('✅ تم تسجيل الدخول بنجاح');
+        showAdminTab('products');
+    } else {
+        showToast('❌ كلمة مرور خاطئة');
+    }
+};
+
+// دالة تسجيل الخروج
+window.logout = function() {
+    localStorage.removeItem('adminLogged');
+    location.reload();
+};
+
+// دالة عرض الإشعارات (toast)
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.style.display = 'block';
+    toast.style.backgroundColor = message.includes('✅') ? '#4CAF50' : '#f44336';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+// ---------- دوال التحقق من المدير ----------
 function isAdmin() {
     return localStorage.getItem('adminLogged') === 'yes';
 }
 
-// تحميل بيانات المتجر من localStorage أو استخدام بيانات افتراضية
+// ---------- بيانات المتجر (localStorage) ----------
 function loadStoreData() {
     let data = localStorage.getItem('storeData');
     if (data) {
         return JSON.parse(data);
     } else {
-        // بيانات افتراضية للمتجر (يمكنك تعديلها لاحقاً)
+        // بيانات افتراضية للمتجر
         return {
             sections: [
                 {
@@ -50,17 +94,16 @@ function loadStoreData() {
     }
 }
 
-// حفظ بيانات المتجر إلى localStorage
 function saveStoreData(data) {
     localStorage.setItem('storeData', JSON.stringify(data));
 }
 
 let storeData = loadStoreData();
 
-// إظهار لوحة المدير
+// ---------- دوال إظهار وإخفاء لوحة المدير ----------
 window.showAdminPanel = function() {
     if (!isAdmin()) {
-        showToast('❌ غير مصرح لك بالدخول', 'error');
+        showToast('❌ غير مصرح لك بالدخول');
         return;
     }
     document.getElementById('adminPanel').style.display = 'block';
@@ -70,24 +113,25 @@ window.showAdminPanel = function() {
     loadAdminStats();
 };
 
-// إخفاء لوحة المدير
 window.hideAdminPanel = function() {
     document.getElementById('adminPanel').style.display = 'none';
 };
 
-// التبديل بين التبويبات
+// ---------- التبديل بين التبويبات ----------
 window.showAdminTab = function(tab) {
+    // إزالة class active من جميع الأزرار والمحتويات
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-    // العثور على الزر الذي تم الضغط عليه
+
+    // إضافة active للزر المناسب (حسب النص)
     const buttons = document.querySelectorAll('.tab-btn');
     buttons.forEach(btn => {
-        if (btn.textContent.includes(tab === 'products' ? 'المنتجات' :
-                                      tab === 'orders' ? 'الطلبات' :
-                                      tab === 'users' ? 'العملاء' : 'الإحصائيات')) {
+        if (btn.textContent.includes(tab === 'products' ? 'المنتجات' : tab === 'orders' ? 'الطلبات' : tab === 'users' ? 'العملاء' : 'الإحصائيات')) {
             btn.classList.add('active');
         }
     });
+
+    // إظهار المحتوى المناسب
     document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
     
     if (tab === 'products') loadAdminProducts();
@@ -136,7 +180,7 @@ function loadAdminProducts() {
 window.updateProduct = function(s, c, p) {
     const name = document.getElementById(`name_${s}_${c}_${p}`).value;
     const price = parseFloat(document.getElementById(`price_${s}_${c}_${p}`).value);
-    if (!name || isNaN(price)) return showToast('❌ بيانات غير صحيحة', 'error');
+    if (!name || isNaN(price)) return showToast('❌ بيانات غير صحيحة');
     
     storeData.sections[s].categories[c].products[p].name = name;
     storeData.sections[s].categories[c].products[p].price = price;
@@ -155,7 +199,7 @@ window.deleteProduct = function(s, c, p) {
 window.addProduct = function(s, c) {
     const name = document.getElementById(`new_name_${s}_${c}`).value;
     const price = parseFloat(document.getElementById(`new_price_${s}_${c}`).value);
-    if (!name || isNaN(price)) return showToast('❌ بيانات غير صحيحة', 'error');
+    if (!name || isNaN(price)) return showToast('❌ بيانات غير صحيحة');
     
     storeData.sections[s].categories[c].products.push({ name, price });
     saveStoreData(storeData);
@@ -266,16 +310,4 @@ function loadAdminStats() {
             </div>
         </div>
     `;
-}
-
-// دالة مساعدة لعرض الإشعارات (إذا لم تكن موجودة)
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
-    toast.style.display = 'block';
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 3000);
 }
