@@ -141,7 +141,7 @@
             </div>
         </div>
 
-        <!-- بطاقات الإحصائيات الأساسية (من الصورة الأولى) -->
+        <!-- بطاقات الإحصائيات الأساسية -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
@@ -169,7 +169,7 @@
             </div>
         </div>
 
-        <!-- بطاقة وضع الصيانة (من الصورة الأولى) -->
+        <!-- بطاقة وضع الصيانة -->
         <div class="maintenance-card">
             <div class="maintenance-info">
                 <i class="fas fa-tools"></i>
@@ -181,7 +181,7 @@
             <button class="maintenance-toggle" onclick="toggleMaintenance()">تفعيل وضع الصيانة</button>
         </div>
 
-        <!-- صف ثاني من البطاقات (من الصورة الثانية) -->
+        <!-- صف ثاني من البطاقات -->
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-content">
@@ -201,7 +201,7 @@
             </div>
         </div>
 
-        <!-- صف ثالث من البطاقات (من الصورة الثالثة) -->
+        <!-- صف ثالث من البطاقات -->
         <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="stat-card">
                 <div class="stat-content">
@@ -262,7 +262,7 @@
             </div>
         </div>
 
-        <!-- تبويبات الإدارة (المنتجات، الطلبات، ...) -->
+        <!-- تبويبات الإدارة -->
         <div style="margin-top: 30px;">
             <div class="admin-tabs">
                 <button class="tab-btn active" onclick="showAdminTab('products')">المنتجات</button>
@@ -282,41 +282,68 @@
     <!-- عنصر التوست للإشعارات -->
     <div id="toast" class="toast"></div>
 
-    <!-- ملفات JavaScript -->
+    <!-- ملفات JavaScript مع ضمان التحميل الصحيح -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/helpers.js"></script>
     <script type="module" src="js/store-data.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/wallet.js"></script>
     <script type="module" src="js/admin.js"></script>
-    <script type="module">
-        import { currentUser, isAdmin } from './js/auth.js';
-        import { loadAdminDashboard } from './js/admin.js';
-        import { showToast } from './js/helpers.js';
-
-        // دالة فتح/إغلاق القائمة الجانبية
+    
+    <script>
+        // تعريف الدوال العامة قبل تحميل الوحدات
         window.toggleSideMenu = function() {
             document.getElementById('sideMenu').classList.toggle('show');
         };
-
-        // دالة تجريبية للعناصر قيد التطوير
+        
         window.showComingSoon = function(item) {
-            showToast(`🚧 ${item} قيد التطوير`, 'info');
-        };
-
-        // دالة تبديل وضع الصيانة (تجريبية)
-        window.toggleMaintenance = function() {
-            showToast('🔧 وضع الصيانة قيد التفعيل (وهمي)', 'info');
-        };
-
-        // استدعاء تحميل البيانات بعد التأكد من أن المستخدم مدير
-        setTimeout(() => {
-            if (!currentUser || !isAdmin()) {
-                window.location.href = 'login.html';
+            // سيتم استبدالها بالدالة الحقيقية بعد تحميل helpers
+            if (window.showToast) {
+                window.showToast(`🚧 ${item} قيد التطوير`, 'info');
             } else {
-                loadAdminDashboard();
+                alert(`🚧 ${item} قيد التطوير`);
             }
-        }, 1000);
+        };
+        
+        window.toggleMaintenance = function() {
+            if (window.showToast) {
+                window.showToast('🔧 وضع الصيانة قيد التفعيل (وهمي)', 'info');
+            } else {
+                alert('🔧 وضع الصيانة قيد التفعيل (وهمي)');
+            }
+        };
+
+        // بعد تحميل الوحدات، نقوم باستيراد الدوال الحقيقية وربطها
+        window.addEventListener('load', async () => {
+            try {
+                // استيراد الوحدات بعد تحميلها
+                const authModule = await import('./js/auth.js');
+                const adminModule = await import('./js/admin.js');
+                const helpersModule = await import('./js/helpers.js');
+
+                // ربط دوال showToast و showComingSoon الحقيقية
+                window.showToast = helpersModule.showToast;
+                window.showComingSoon = function(item) {
+                    helpersModule.showToast(`🚧 ${item} قيد التطوير`, 'info');
+                };
+                window.toggleMaintenance = function() {
+                    helpersModule.showToast('🔧 وضع الصيانة قيد التفعيل (وهمي)', 'info');
+                };
+                window.logout = authModule.logout; // دالة تسجيل الخروج
+
+                // التحقق من المستخدم
+                setTimeout(() => {
+                    if (!authModule.currentUser || !authModule.isAdmin()) {
+                        window.location.href = 'login.html';
+                    } else {
+                        adminModule.loadAdminDashboard();
+                    }
+                }, 500);
+
+            } catch (error) {
+                console.error('خطأ في تحميل الوحدات:', error);
+            }
+        });
     </script>
 </body>
 </html>
