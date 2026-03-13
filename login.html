@@ -147,20 +147,25 @@
 
     <div id="toast" class="toast"></div>
 
-    <!-- ملفات JavaScript -->
+    <!-- استيراد Firebase أولاً -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/helpers.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    
+    <!-- هذا السكريبت يعرف الدوال على window -->
     <script type="module">
         import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { auth } from './js/firebase-config.js';
         import { showToast } from './js/helpers.js';
         import { ADMIN_EMAIL } from './js/auth.js';
 
-        // دالة تسجيل الدخول
+        // دالة تسجيل الدخول - نربطها بـ window
         window.handleLogin = async function() {
+            console.log('1. بدء تسجيل الدخول');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            errorDiv.style.display = 'none';
 
             if (!email || !password) {
                 errorDiv.style.display = 'block';
@@ -169,8 +174,10 @@
             }
 
             try {
+                console.log('2. محاولة تسجيل الدخول بـ', email);
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
+                console.log('3. تم تسجيل الدخول:', user.email);
 
                 if (user.email !== ADMIN_EMAIL) {
                     await auth.signOut();
@@ -185,6 +192,7 @@
                 }, 1500);
 
             } catch (error) {
+                console.error('4. خطأ:', error);
                 errorDiv.style.display = 'block';
                 if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                     errorDiv.textContent = '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة';
@@ -212,6 +220,9 @@
                     showToast('❌ ' + error.message, 'error');
                 });
         };
+
+        // لجعل showToast متاحاً عالمياً (اختياري)
+        window.showToast = showToast;
     </script>
 </body>
 </html>
