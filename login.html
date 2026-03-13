@@ -6,52 +6,211 @@
     <title>دخول لوحة الإدارة - ALZAK STORE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0a0a;padding:15px;}.login-card{background:#111;border:2px solid #fbbf24;border-radius:30px;padding:40px 30px;width:100%;max-width:400px;}.login-header{text-align:center;margin-bottom:30px;}.login-header i{font-size:60px;color:#fbbf24;}.login-header h1{color:#fbbf24;font-size:28px;}.input-group{margin-bottom:20px;}.input-group input{width:100%;background:#1a1a1a;border:2px solid #333;border-radius:15px;padding:15px;color:#fff;}.login-btn{width:100%;background:#fbbf24;color:#000;border:none;border-radius:15px;padding:15px;font-weight:700;cursor:pointer;}.error-message{color:#ef4444;text-align:center;margin-top:15px;display:none;}.toast{position:fixed;bottom:20px;left:15px;right:15px;background:#111;border:2px solid #fbbf24;padding:15px;border-radius:30px;text-align:center;transform:translateY(200%);transition:0.3s;}.toast.show{transform:translateY(0);}</style>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #0a0a0a;
+            padding: 15px;
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        .login-card {
+            background: #111;
+            border: 2px solid #fbbf24;
+            border-radius: 30px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header i {
+            font-size: 60px;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+        .login-header h1 {
+            color: #fbbf24;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .login-header p {
+            color: #888;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: #fff;
+            font-size: 16px;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            border-color: #fbbf24;
+            outline: none;
+        }
+        .input-group input::placeholder {
+            color: #666;
+        }
+        .login-btn {
+            width: 100%;
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            background: #fff;
+        }
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .forgot-password a {
+            color: #fbbf24;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #ef4444;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 15px;
+            right: 15px;
+            background: #111;
+            border: 2px solid #fbbf24;
+            padding: 15px;
+            border-radius: 30px;
+            text-align: center;
+            transform: translateY(200%);
+            transition: 0.3s;
+            z-index: 10001;
+        }
+        .toast.show {
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
     <div class="login-card">
         <div class="login-header">
             <i class="fas fa-crown"></i>
             <h1>دخول لوحة الإدارة</h1>
-            <p style="color:#888;">ALZAK STORE</p>
+            <p>ALZAK STORE</p>
         </div>
-        <div class="input-group"><input type="email" id="email" placeholder="البريد الإلكتروني" value="alolao45y@gmail.com"></div>
-        <div class="input-group"><input type="password" id="password" placeholder="كلمة المرور"></div>
-        <button class="login-btn" onclick="handleLogin()">دخول</button>
+
+        <div class="input-group">
+            <input type="email" id="email" placeholder="البريد الإلكتروني" value="alolao45y@gmail.com">
+        </div>
+        <div class="input-group">
+            <input type="password" id="password" placeholder="كلمة المرور" value="admin123">
+        </div>
+
+        <button class="login-btn" onclick="handleLogin()">
+            <i class="fas fa-sign-in-alt" style="margin-left: 8px;"></i> دخول
+        </button>
+
+        <div class="forgot-password">
+            <a href="#" onclick="resetPassword()">نسيت كلمة المرور؟</a>
+        </div>
+
         <div class="error-message" id="errorMessage"></div>
     </div>
+
     <div id="toast" class="toast"></div>
+
+    <!-- ملفات JavaScript -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/helpers.js"></script>
     <script type="module">
-        import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { auth } from './js/firebase-config.js';
         import { showToast } from './js/helpers.js';
         import { ADMIN_EMAIL } from './js/auth.js';
+
+        // دالة تسجيل الدخول
         window.handleLogin = async function() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+
             if (!email || !password) {
                 errorDiv.style.display = 'block';
                 errorDiv.textContent = '❌ الرجاء إدخال البريد الإلكتروني وكلمة المرور';
                 return;
             }
+
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
+
                 if (user.email !== ADMIN_EMAIL) {
                     await auth.signOut();
                     errorDiv.style.display = 'block';
                     errorDiv.textContent = '❌ غير مصرح بالدخول إلى لوحة الإدارة';
                     return;
                 }
+
                 showToast('✅ مرحباً أيها المدير');
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+
             } catch (error) {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = '❌ ' + (error.message || 'خطأ في تسجيل الدخول');
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorDiv.textContent = '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorDiv.textContent = '❌ البريد الإلكتروني غير صالح';
+                } else {
+                    errorDiv.textContent = '❌ حدث خطأ: ' + error.message;
+                }
             }
+        };
+
+        // دالة إعادة تعيين كلمة المرور
+        window.resetPassword = function() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showToast('❌ الرجاء إدخال البريد الإلكتروني أولاً', 'error');
+                return;
+            }
+
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    showToast('✅ تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك');
+                })
+                .catch((error) => {
+                    showToast('❌ ' + error.message, 'error');
+                });
         };
     </script>
 </body>
