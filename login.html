@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>دخول المدير - ALZAK STORE</title>
@@ -68,12 +68,12 @@
         <div class="error" id="errorMessage"></div>
     </div>
 
-    <!-- تحميل Firebase من CDN (بدون أي ملفات إضافية) -->
+    <!-- تحميل Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 
     <script>
-        // 1. إعدادات Firebase (تأكد من صحتها)
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCO_VTLgQkTOv_MkB0SEdSEYdRMi9IdMFA",
             authDomain: "alzak-store-dea53.firebaseapp.com",
@@ -82,13 +82,11 @@
             messagingSenderId: "494547602038",
             appId: "1:494547602038:web:f9f78605414173ae63ed57"
         };
-
-        // 2. تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const ADMIN_EMAIL = 'alolao45y@gmail.com';
 
-        // 3. تعريف الدالة على window (لتكون متاحة للزر)
+        // تعريف دالة تسجيل الدخول
         window.handleLogin = function() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -105,7 +103,6 @@
                 .then(userCredential => {
                     const user = userCredential.user;
                     if (user.email === ADMIN_EMAIL) {
-                        // توجيه إلى لوحة التحكم
                         window.location.href = 'dashboard.html';
                     } else {
                         auth.signOut();
@@ -124,10 +121,6 @@
                     }
                 });
         };
-
-        // 4. اختياري: تسجيل رسالة في Console للتأكد من تحميل السكريبت
-        console.log('✅ تم تحميل السكريبت وتهيئة Firebase');
-        console.log('📌 نوع handleLogin:', typeof handleLogin); // يجب أن يظهر "function"
     </script>
 </body>
 </html>
