@@ -51,6 +51,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
+            display: none; /* مخفي افتراضيًا */
         }
         #logoutBtn:hover {
             background: #dc2626;
@@ -297,7 +298,6 @@
         };
         
         window.showComingSoon = function(item) {
-            // سيتم استبدالها بالدالة الحقيقية بعد تحميل helpers
             if (window.showToast) {
                 window.showToast(`🚧 ${item} قيد التطوير`, 'info');
             } else {
@@ -313,15 +313,15 @@
             }
         };
 
-        // بعد تحميل الوحدات، نقوم باستيراد الدوال الحقيقية وربطها
+        // بعد تحميل الصفحة، نستورد الوحدات ونتحقق من المستخدم
         window.addEventListener('load', async () => {
             try {
-                // استيراد الوحدات بعد تحميلها
+                // استيراد الوحدات
                 const authModule = await import('./js/auth.js');
                 const adminModule = await import('./js/admin.js');
                 const helpersModule = await import('./js/helpers.js');
 
-                // ربط دوال showToast و showComingSoon الحقيقية
+                // ربط الدوال العامة
                 window.showToast = helpersModule.showToast;
                 window.showComingSoon = function(item) {
                     helpersModule.showToast(`🚧 ${item} قيد التطوير`, 'info');
@@ -329,19 +329,41 @@
                 window.toggleMaintenance = function() {
                     helpersModule.showToast('🔧 وضع الصيانة قيد التفعيل (وهمي)', 'info');
                 };
-                window.logout = authModule.logout; // دالة تسجيل الخروج
+                window.logout = authModule.logout;
 
-                // التحقق من المستخدم
-                setTimeout(() => {
-                    if (!authModule.currentUser || !authModule.isAdmin()) {
-                        window.location.href = 'login.html';
+                // دالة لتحديث واجهة المستخدم (إظهار/إخفاء زر الخروج واسم المدير)
+                function updateUI() {
+                    if (authModule.currentUser && authModule.isAdmin()) {
+                        document.getElementById('adminName').textContent = authModule.currentUser.name || authModule.currentUser.email;
+                        document.getElementById('logoutBtn').style.display = 'block';
                     } else {
-                        adminModule.loadAdminDashboard();
+                        document.getElementById('adminName').textContent = '';
+                        document.getElementById('logoutBtn').style.display = 'none';
                     }
-                }, 500);
+                }
+
+                // انتظار حتى يتم تحديث currentUser من Firebase
+                let attempts = 0;
+                const maxAttempts = 20; // 4 ثوان (200ms * 20)
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (authModule.currentUser !== undefined) { // currentUser قد يكون null أو object
+                        clearInterval(interval);
+                        if (authModule.currentUser && authModule.isAdmin()) {
+                            updateUI();
+                            adminModule.loadAdminDashboard();
+                        } else {
+                            window.location.href = 'login.html';
+                        }
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        window.location.href = 'login.html';
+                    }
+                }, 200);
 
             } catch (error) {
                 console.error('خطأ في تحميل الوحدات:', error);
+                alert('حدث خطأ في تحميل الصفحة. تأكد من وجود جميع الملفات.');
             }
         });
     </script>
