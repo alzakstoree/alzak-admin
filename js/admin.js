@@ -8,7 +8,7 @@ const ADMIN_PASSWORD = "123456"; // غيرها لكلمة مرور قوية
     if (localStorage.getItem('adminLogged') === 'yes') {
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
-        showAdminTab('products'); // افتح المنتجات افتراضياً
+        showAdminTab('products');
     }
 })();
 
@@ -55,7 +55,7 @@ function loadStoreData() {
     if (data) {
         return JSON.parse(data);
     } else {
-        // بيانات افتراضية للمتجر (يمكنك تعديلها لاحقاً)
+        // بيانات افتراضية للمتجر
         return {
             sections: [
                 {
