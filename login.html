@@ -6,122 +6,23 @@
     <title>دخول لوحة الإدارة - ALZAK STORE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, sans-serif;
-        }
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: #0a0a0a;
-            padding: 15px;
-        }
-        .login-card {
-            background: #111;
-            border: 2px solid #fbbf24;
-            border-radius: 30px;
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header i {
-            font-size: 60px;
-            color: #fbbf24;
-            margin-bottom: 10px;
-        }
-        .login-header h1 {
-            color: #fbbf24;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        .login-header p {
-            color: #888;
-            font-size: 14px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-group input {
-            width: 100%;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 15px;
-            padding: 15px 20px;
-            color: #fff;
-            font-size: 16px;
-            transition: 0.3s;
-        }
-        .input-group input:focus {
-            border-color: #fbbf24;
-            outline: none;
-        }
-        .input-group input::placeholder {
-            color: #666;
-        }
-        .login-btn {
-            width: 100%;
-            background: #fbbf24;
-            color: #000;
-            border: none;
-            border-radius: 15px;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .login-btn:hover {
-            background: #fff;
-        }
-        .forgot-password {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .forgot-password a {
-            color: #fbbf24;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-        .error-message {
-            color: #ef4444;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            display: none;
-            background: #1a1a1a;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            background: #111;
-            border: 2px solid #fbbf24;
-            padding: 15px;
-            border-radius: 30px;
-            text-align: center;
-            transform: translateY(200%);
-            transition: 0.3s;
-            z-index: 10001;
-        }
-        .toast.show {
-            transform: translateY(0);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0a0a0a; padding: 15px; }
+        .login-card { background: #111; border: 2px solid #fbbf24; border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 400px; }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header i { font-size: 60px; color: #fbbf24; margin-bottom: 10px; }
+        .login-header h1 { color: #fbbf24; font-size: 28px; margin-bottom: 5px; }
+        .login-header p { color: #888; font-size: 14px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group input { width: 100%; background: #1a1a1a; border: 2px solid #333; border-radius: 15px; padding: 15px; color: #fff; font-size: 16px; }
+        .input-group input:focus { border-color: #fbbf24; outline: none; }
+        .login-btn { width: 100%; background: #fbbf24; color: #000; border: none; border-radius: 15px; padding: 15px; font-size: 18px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .login-btn:hover { background: #fff; }
+        .forgot-password { text-align: center; margin-top: 15px; }
+        .forgot-password a { color: #fbbf24; text-decoration: none; font-size: 14px; }
+        .error-message { color: #ef4444; text-align: center; margin-top: 15px; font-size: 14px; display: none; background: #1a1a1a; padding: 10px; border-radius: 10px; }
+        .toast { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #111; border: 2px solid #fbbf24; padding: 15px; border-radius: 30px; text-align: center; transform: translateY(200%); transition: 0.3s; z-index: 10001; }
+        .toast.show { transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -139,12 +40,13 @@
             <input type="password" id="password" placeholder="كلمة المرور" value="admin123">
         </div>
 
-        <button class="login-btn" onclick="handleLogin()">
+        <!-- زر بدون onclick مباشر (سنضيف الحدث عبر JavaScript) -->
+        <button class="login-btn" id="loginBtn">
             <i class="fas fa-sign-in-alt" style="margin-left: 8px;"></i> دخول
         </button>
 
         <div class="forgot-password">
-            <a href="#" onclick="resetPassword()">نسيت كلمة المرور؟</a>
+            <a href="#" id="forgotPasswordLink">نسيت كلمة المرور؟</a>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -152,12 +54,12 @@
 
     <div id="toast" class="toast"></div>
 
-    <!-- استيراد Firebase من CDN (بدون أي ملفات إضافية) -->
+    <!-- استيراد Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 
     <script>
-        // تكوين Firebase (نفس الإعدادات)
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCO_VTLgQkTOv_MkB0SEdSEYdRMi9IdMFA",
             authDomain: "alzak-store-dea53.firebaseapp.com",
@@ -170,11 +72,9 @@
         // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // بريد المدير المسموح له فقط
         const ADMIN_EMAIL = 'alolao45y@gmail.com';
 
-        // دالة عرض الإشعارات (مؤقتة)
+        // دالة عرض الإشعارات
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             if (!toast) return alert(message);
@@ -183,8 +83,8 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // دالة تسجيل الدخول - معرفة على النطاق العام (window)
-        window.handleLogin = async function() {
+        // تعريف دالة تسجيل الدخول (ستُستدعى من مستمع الحدث)
+        async function handleLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
@@ -226,30 +126,36 @@
                     errorDiv.textContent = '❌ ' + error.message;
                 }
             }
-        };
+        }
 
         // دالة إعادة تعيين كلمة المرور
-        window.resetPassword = function() {
+        async function resetPassword() {
             const email = document.getElementById('email').value.trim();
             if (!email) {
                 showToast('❌ الرجاء إدخال البريد الإلكتروني أولاً', 'error');
                 return;
             }
-            auth.sendPasswordResetEmail(email)
-                .then(() => {
-                    showToast('✅ تم إرسال رابط إعادة التعيين إلى بريدك');
-                })
-                .catch(error => {
-                    showToast('❌ ' + error.message, 'error');
-                });
-        };
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast('✅ تم إرسال رابط إعادة التعيين إلى بريدك');
+            } catch (error) {
+                showToast('❌ ' + error.message, 'error');
+            }
+        }
 
-        // اختياري: للتحقق من حالة المصادقة الحالية (يمكنك إضافته للتجربة)
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log('المستخدم الحالي:', user.email);
-            } else {
-                console.log('لا يوجد مستخدم حالي');
+        // ربط الأحداث بعد تحميل الصفحة بالكامل
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', handleLogin);
+            }
+
+            const forgotLink = document.getElementById('forgotPasswordLink');
+            if (forgotLink) {
+                forgotLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    resetPassword();
+                });
             }
         });
     </script>
