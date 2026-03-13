@@ -55,7 +55,7 @@ function loadStoreData() {
     if (data) {
         return JSON.parse(data);
     } else {
-        // بيانات افتراضية للمتجر
+        // بيانات افتراضية للمتجر (يمكنك تعديلها لاحقاً)
         return {
             sections: [
                 {
