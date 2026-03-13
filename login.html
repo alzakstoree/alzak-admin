@@ -7,116 +7,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: #0a0a0a;
-            padding: 15px;
-            margin: 0;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        .login-card {
-            background: #111;
-            border: 2px solid #fbbf24;
-            border-radius: 30px;
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header i {
-            font-size: 60px;
-            color: #fbbf24;
-            margin-bottom: 10px;
-        }
-        .login-header h1 {
-            color: #fbbf24;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        .login-header p {
-            color: #888;
-            font-size: 14px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-group input {
-            width: 100%;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 15px;
-            padding: 15px 20px;
-            color: #fff;
-            font-size: 16px;
-            transition: 0.3s;
-            box-sizing: border-box;
-        }
-        .input-group input:focus {
-            border-color: #fbbf24;
-            outline: none;
-        }
-        .input-group input::placeholder {
-            color: #666;
-        }
-        .login-btn {
-            width: 100%;
-            background: #fbbf24;
-            color: #000;
-            border: none;
-            border-radius: 15px;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .login-btn:hover {
-            background: #fff;
-        }
-        .forgot-password {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .forgot-password a {
-            color: #fbbf24;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-        .error-message {
-            color: #ef4444;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            display: none;
-        }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            background: #111;
-            border: 2px solid #fbbf24;
-            padding: 15px;
-            border-radius: 30px;
-            text-align: center;
-            transform: translateY(200%);
-            transition: 0.3s;
-            z-index: 10001;
-        }
-        .toast.show {
-            transform: translateY(0);
-        }
+        /* نفس التنسيقات السابقة */
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0a0a0a; padding: 15px; }
+        .login-card { background: #111; border: 2px solid #fbbf24; border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 400px; }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header i { font-size: 60px; color: #fbbf24; }
+        .login-header h1 { color: #fbbf24; font-size: 28px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group input { width: 100%; background: #1a1a1a; border: 2px solid #333; border-radius: 15px; padding: 15px; color: #fff; }
+        .login-btn { width: 100%; background: #fbbf24; color: #000; border: none; border-radius: 15px; padding: 15px; font-weight: 700; cursor: pointer; }
+        .error-message { color: #ef4444; text-align: center; margin-top: 15px; display: none; }
+        .forgot-password { text-align: center; margin-top: 15px; }
+        .forgot-password a { color: #fbbf24; text-decoration: none; }
+        .toast { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #111; border: 2px solid #fbbf24; padding: 15px; border-radius: 30px; text-align: center; transform: translateY(200%); transition: 0.3s; }
+        .toast.show { transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -126,42 +30,51 @@
             <h1>دخول لوحة الإدارة</h1>
             <p>ALZAK STORE</p>
         </div>
-
         <div class="input-group">
             <input type="email" id="email" placeholder="البريد الإلكتروني" value="alolao45y@gmail.com">
         </div>
         <div class="input-group">
             <input type="password" id="password" placeholder="كلمة المرور" value="admin123">
         </div>
-
-        <button class="login-btn" onclick="handleLogin()">
-            <i class="fas fa-sign-in-alt" style="margin-left: 8px;"></i> دخول
-        </button>
-
+        <button class="login-btn" onclick="handleLogin()">دخول</button>
         <div class="forgot-password">
             <a href="#" onclick="resetPassword()">نسيت كلمة المرور؟</a>
         </div>
-
         <div class="error-message" id="errorMessage"></div>
     </div>
-
     <div id="toast" class="toast"></div>
 
-    <!-- استيراد Firebase أولاً -->
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/helpers.js"></script>
-    <script type="module" src="js/auth.js"></script>
-    
-    <!-- هذا السكريبت يعرف الدوال على window -->
-    <script type="module">
-        import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { auth } from './js/firebase-config.js';
-        import { showToast } from './js/helpers.js';
-        import { ADMIN_EMAIL } from './js/auth.js';
+    <!-- استيراد Firebase مباشرة -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO_VTLgQkTOv_MkB0SEdSEYdRMi9IdMFA",
+            authDomain: "alzak-store-dea53.firebaseapp.com",
+            projectId: "alzak-store-dea53",
+            storageBucket: "alzak-store-dea53.firebasestorage.app",
+            messagingSenderId: "494547602038",
+            appId: "1:494547602038:web:f9f78605414173ae63ed57"
+        };
 
-        // دالة تسجيل الدخول - نربطها بـ window
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        const ADMIN_EMAIL = 'alolao45y@gmail.com';
+
+        // دالة عرض الإشعارات
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            if (!toast) return alert(message);
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // دالة تسجيل الدخول - عامة
         window.handleLogin = async function() {
-            console.log('1. بدء تسجيل الدخول');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
@@ -174,15 +87,13 @@
             }
 
             try {
-                console.log('2. محاولة تسجيل الدخول بـ', email);
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
-                console.log('3. تم تسجيل الدخول:', user.email);
 
                 if (user.email !== ADMIN_EMAIL) {
                     await auth.signOut();
                     errorDiv.style.display = 'block';
-                    errorDiv.textContent = '❌ غير مصرح بالدخول إلى لوحة الإدارة';
+                    errorDiv.textContent = '❌ غير مصرح بالدخول';
                     return;
                 }
 
@@ -190,39 +101,21 @@
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1500);
-
             } catch (error) {
-                console.error('4. خطأ:', error);
                 errorDiv.style.display = 'block';
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    errorDiv.textContent = '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorDiv.textContent = '❌ البريد الإلكتروني غير صالح';
-                } else {
-                    errorDiv.textContent = '❌ حدث خطأ: ' + error.message;
-                }
+                errorDiv.textContent = '❌ ' + (error.message || 'خطأ في تسجيل الدخول');
             }
         };
 
         // دالة إعادة تعيين كلمة المرور
         window.resetPassword = function() {
             const email = document.getElementById('email').value.trim();
-            if (!email) {
-                showToast('❌ الرجاء إدخال البريد الإلكتروني أولاً', 'error');
-                return;
-            }
-
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    showToast('✅ تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك');
-                })
-                .catch((error) => {
-                    showToast('❌ ' + error.message, 'error');
-                });
+            if (!email) return showToast('❌ الرجاء إدخال البريد الإلكتروني', 'error');
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => showToast('✅ تم إرسال رابط إعادة التعيين'))
+                .catch(error => showToast('❌ ' + error.message, 'error'));
         };
-
-        // لجعل showToast متاحاً عالمياً (اختياري)
-        window.showToast = showToast;
     </script>
 </body>
 </html>
