@@ -337,6 +337,181 @@ body.light-mode {
     font-weight: 700;
 }
 
+/* ===== تنسيقات النوافذ المنبثقة (Modals) ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    z-index: 10001;
+}
+
+.modal-content {
+    background: #111;
+    border: 2px solid #fbbf24;
+    border-radius: 25px;
+    padding: 25px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: #fff;
+    position: relative;
+}
+
+.modal-content h3 {
+    color: #fbbf24;
+    margin-bottom: 20px;
+    font-size: 20px;
+    text-align: center;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin: 8px 0;
+    color: #fff;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+    border-color: #fbbf24;
+    outline: none;
+}
+
+.modal-content input::placeholder {
+    color: #666;
+}
+
+.modal-content button {
+    background: #fbbf24;
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    margin: 10px 0;
+    width: 100%;
+    font-size: 16px;
+}
+
+.modal-content button:hover {
+    background: #fff;
+}
+
+.modal-content .close-btn {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 24px;
+    color: #fbbf24;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: auto;
+    padding: 0;
+}
+
+.modal-content .close-btn:hover {
+    color: #fff;
+    background: none;
+}
+
+/* تنسيق الجدول داخل النوافذ */
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.modal-content th {
+    color: #fbbf24;
+    font-weight: 700;
+    padding: 10px;
+    border-bottom: 2px solid #fbbf24;
+}
+
+.modal-content td {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.modal-content .edit-btn,
+.modal-content .delete-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    width: auto;
+    margin: 0 2px;
+}
+
+.modal-content .edit-btn {
+    background: #22c55e;
+}
+
+.modal-content .delete-btn {
+    background: #ef4444;
+}
+
+.modal-content .add-btn {
+    background: #fbbf24;
+    margin-bottom: 15px;
+}
+
+/* تنسيق شبكة طرق الدفع */
+.payment-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.payment-card {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+}
+
+.payment-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fbbf24;
+    margin-bottom: 10px;
+}
+
+.payment-card .payment-name {
+    color: #fbbf24;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.payment-card .payment-number {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+
 /* ===== تحسينات الجوال ===== */
 @media (max-width: 480px) {
     .stats-grid {
@@ -365,8 +540,15 @@ body.light-mode {
     .maintenance-toggle {
         width: 100%;
     }
+    
+    .modal-content {
+        padding: 20px;
+    }
+    
+    .payment-methods-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-/* ===== باقي التنسيقات القديمة (محتفظ بها) ===== */
-/* (هنا تبقى باقي التنسيقات التي كانت موجودة في ملفك الأصلي، لم يتم حذفها) */
-/* سأضع مؤشراً لبقية الكود ولكنك تحتفظ بكل التنسيقات السابقة كما هي */
+/* ===== باقي التنسيقات القديمة ===== */
+/* (جميع التنسيقات السابقة محفوظة كما هي) */
