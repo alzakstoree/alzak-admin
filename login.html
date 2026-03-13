@@ -1,163 +1,61 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دخول لوحة الإدارة - ALZAK STORE</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>دخول المدير</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0a0a0a; padding: 15px; }
-        .login-card { background: #111; border: 2px solid #fbbf24; border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 400px; }
-        .login-header { text-align: center; margin-bottom: 30px; }
-        .login-header i { font-size: 60px; color: #fbbf24; margin-bottom: 10px; }
-        .login-header h1 { color: #fbbf24; font-size: 28px; margin-bottom: 5px; }
-        .login-header p { color: #888; font-size: 14px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group input { width: 100%; background: #1a1a1a; border: 2px solid #333; border-radius: 15px; padding: 15px; color: #fff; font-size: 16px; }
-        .input-group input:focus { border-color: #fbbf24; outline: none; }
-        .login-btn { width: 100%; background: #fbbf24; color: #000; border: none; border-radius: 15px; padding: 15px; font-size: 18px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .login-btn:hover { background: #fff; }
-        .forgot-password { text-align: center; margin-top: 15px; }
-        .forgot-password a { color: #fbbf24; text-decoration: none; font-size: 14px; }
-        .error-message { color: #ef4444; text-align: center; margin-top: 15px; font-size: 14px; display: none; background: #1a1a1a; padding: 10px; border-radius: 10px; }
-        .toast { position: fixed; bottom: 20px; left: 15px; right: 15px; background: #111; border: 2px solid #fbbf24; padding: 15px; border-radius: 30px; text-align: center; transform: translateY(200%); transition: 0.3s; z-index: 10001; }
-        .toast.show { transform: translateY(0); }
+        body { background: #0a0a0a; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .box { background: #111; border: 2px solid #fbbf24; border-radius: 30px; padding: 40px; width: 300px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #333; border: 1px solid #fbbf24; border-radius: 10px; color: white; }
+        button { width: 100%; padding: 12px; background: #fbbf24; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .error { color: red; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="login-header">
-            <i class="fas fa-crown"></i>
-            <h1>دخول لوحة الإدارة</h1>
-            <p>ALZAK STORE</p>
-        </div>
-
-        <div class="input-group">
-            <input type="email" id="email" placeholder="البريد الإلكتروني" value="alolao45y@gmail.com">
-        </div>
-        <div class="input-group">
-            <input type="password" id="password" placeholder="كلمة المرور" value="admin123">
-        </div>
-
-        <!-- زر بدون onclick مباشر (سنضيف الحدث عبر JavaScript) -->
-        <button class="login-btn" id="loginBtn">
-            <i class="fas fa-sign-in-alt" style="margin-left: 8px;"></i> دخول
-        </button>
-
-        <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">نسيت كلمة المرور؟</a>
-        </div>
-
-        <div class="error-message" id="errorMessage"></div>
+    <div class="box">
+        <h2 style="color:#fbbf24; text-align:center;">دخول المدير</h2>
+        <input type="email" id="email" value="alolao45y@gmail.com">
+        <input type="password" id="password" value="admin123">
+        <button onclick="handleLogin()">دخول</button>
+        <div class="error" id="error"></div>
     </div>
 
-    <div id="toast" class="toast"></div>
-
-    <!-- استيراد Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-
     <script>
         // إعدادات Firebase
-        const firebaseConfig = {
+        firebase.initializeApp({
             apiKey: "AIzaSyCO_VTLgQkTOv_MkB0SEdSEYdRMi9IdMFA",
             authDomain: "alzak-store-dea53.firebaseapp.com",
             projectId: "alzak-store-dea53",
             storageBucket: "alzak-store-dea53.firebasestorage.app",
             messagingSenderId: "494547602038",
             appId: "1:494547602038:web:f9f78605414173ae63ed57"
-        };
-
-        // تهيئة Firebase
-        firebase.initializeApp(firebaseConfig);
+        });
         const auth = firebase.auth();
-        const ADMIN_EMAIL = 'alolao45y@gmail.com';
 
-        // دالة عرض الإشعارات
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            if (!toast) return alert(message);
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // تعريف دالة تسجيل الدخول (ستُستدعى من مستمع الحدث)
-        async function handleLogin() {
-            const email = document.getElementById('email').value.trim();
+        // تعريف الدالة على window
+        window.handleLogin = function() {
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('errorMessage');
+            const errorDiv = document.getElementById('error');
             errorDiv.style.display = 'none';
 
-            if (!email || !password) {
-                errorDiv.textContent = '❌ الرجاء إدخال البريد الإلكتروني وكلمة المرور';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            try {
-                console.log('محاولة تسجيل الدخول بالبريد:', email);
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                console.log('تم تسجيل الدخول:', user.email);
-
-                if (user.email !== ADMIN_EMAIL) {
-                    await auth.signOut();
-                    errorDiv.textContent = '❌ غير مصرح بالدخول إلى لوحة الإدارة';
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    if (userCredential.user.email === 'alolao45y@gmail.com') {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        auth.signOut();
+                        errorDiv.textContent = 'غير مصرح';
+                        errorDiv.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    errorDiv.textContent = err.message;
                     errorDiv.style.display = 'block';
-                    return;
-                }
-
-                showToast('✅ مرحباً أيها المدير');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-            } catch (error) {
-                console.error('خطأ في تسجيل الدخول:', error);
-                errorDiv.style.display = 'block';
-                if (error.code === 'auth/user-not-found') {
-                    errorDiv.textContent = '❌ المستخدم غير موجود';
-                } else if (error.code === 'auth/wrong-password') {
-                    errorDiv.textContent = '❌ كلمة المرور غير صحيحة';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorDiv.textContent = '❌ البريد الإلكتروني غير صالح';
-                } else {
-                    errorDiv.textContent = '❌ ' + error.message;
-                }
-            }
-        }
-
-        // دالة إعادة تعيين كلمة المرور
-        async function resetPassword() {
-            const email = document.getElementById('email').value.trim();
-            if (!email) {
-                showToast('❌ الرجاء إدخال البريد الإلكتروني أولاً', 'error');
-                return;
-            }
-            try {
-                await auth.sendPasswordResetEmail(email);
-                showToast('✅ تم إرسال رابط إعادة التعيين إلى بريدك');
-            } catch (error) {
-                showToast('❌ ' + error.message, 'error');
-            }
-        }
-
-        // ربط الأحداث بعد تحميل الصفحة بالكامل
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginBtn = document.getElementById('loginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', handleLogin);
-            }
-
-            const forgotLink = document.getElementById('forgotPasswordLink');
-            if (forgotLink) {
-                forgotLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    resetPassword();
                 });
-            }
-        });
+        };
     </script>
 </body>
 </html>
