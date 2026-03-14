@@ -1,3 +1,7 @@
+console.log('🔥 admin-extras.js: بداية الملف');
+console.log('🔍 supabase:', typeof supabase);
+console.log('🔍 supabaseClient:', typeof supabase);
+
 // ==================== admin-extras.js (معدل لـ Supabase) ====================
 import { supabase } from './supabase-config.js';
 import { showToast, showModal, closeModal } from './helpers.js';
