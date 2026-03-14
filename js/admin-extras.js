@@ -1,12 +1,11 @@
-// ==================== admin-extras.js (نسخة متكاملة وكاملة) ====================
+// ==================== admin-extras.js (معدل للإصدار 8) ====================
 import { db } from './firebase-config.js';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast, showModal, closeModal } from './helpers.js';
 
 // ==================== طرق الدفع ====================
 async function loadPaymentMethods() {
     try {
-        const querySnapshot = await getDocs(collection(db, 'paymentMethods'));
+        const querySnapshot = await db.collection('paymentMethods').get();
         let html = '<h3>💳 طرق الدفع</h3>';
         html += '<button class="add-btn" onclick="showAddPaymentMethodModal()">➕ إضافة طريقة دفع جديدة</button>';
         html += '<div class="payment-methods-grid">';
@@ -57,7 +56,7 @@ window.savePaymentMethod = async function() {
     if (!name || !number) return showToast('الرجاء إدخال الاسم والرقم', 'error');
     
     try {
-        await addDoc(collection(db, 'paymentMethods'), { 
+        await db.collection('paymentMethods').add({ 
             name, 
             accountNumber: number, 
             image: image || '', 
@@ -74,8 +73,8 @@ window.savePaymentMethod = async function() {
 };
 
 window.editPaymentMethod = async function(id) {
-    const docSnap = await getDoc(doc(db, 'paymentMethods', id));
-    if (!docSnap.exists()) return showToast('غير موجود', 'error');
+    const docSnap = await db.collection('paymentMethods').doc(id).get();
+    if (!docSnap.exists) return showToast('غير موجود', 'error');
     const m = docSnap.data();
     
     const form = `
@@ -97,7 +96,7 @@ window.updatePaymentMethod = async function(id) {
     if (!name || !number) return showToast('الرجاء إدخال الاسم والرقم', 'error');
     
     try {
-        await updateDoc(doc(db, 'paymentMethods', id), { name, accountNumber: number, image, accountName });
+        await db.collection('paymentMethods').doc(id).update({ name, accountNumber: number, image, accountName });
         showToast('✅ تم التحديث');
         closeModal('paymentMethodsModal');
         loadPaymentMethods();
@@ -110,7 +109,7 @@ window.updatePaymentMethod = async function(id) {
 window.deletePaymentMethod = async function(id) {
     if (!confirm('هل أنت متأكد من الحذف؟')) return;
     try {
-        await deleteDoc(doc(db, 'paymentMethods', id));
+        await db.collection('paymentMethods').doc(id).delete();
         showToast('✅ تم الحذف');
         loadPaymentMethods();
     } catch (error) {
@@ -122,7 +121,7 @@ window.deletePaymentMethod = async function(id) {
 // ==================== العملات ====================
 async function loadCurrencies() {
     try {
-        const querySnapshot = await getDocs(collection(db, 'currencies'));
+        const querySnapshot = await db.collection('currencies').get();
         let html = '<h3>💰 العملات</h3>';
         html += '<button class="add-btn" onclick="showAddCurrencyModal()">➕ إضافة عملة</button>';
         html += '<table><tr><th>الاسم</th><th>الرمز</th><th>سعر الصرف</th><th>إجراءات</th></tr>';
@@ -170,7 +169,7 @@ window.saveCurrency = async function() {
     if (!name || !symbol) return showToast('الرجاء إدخال الاسم والرمز', 'error');
     
     try {
-        await addDoc(collection(db, 'currencies'), { name, symbol, exchangeRate: rate, createdAt: new Date().toISOString() });
+        await db.collection('currencies').add({ name, symbol, exchangeRate: rate, createdAt: new Date().toISOString() });
         showToast('✅ تمت الإضافة');
         closeModal('currenciesModal');
         loadCurrencies();
@@ -181,14 +180,13 @@ window.saveCurrency = async function() {
 };
 
 window.editCurrency = async function(id) {
-    // يمكنك إضافة دالة التعديل لاحقًا
     showToast('🚧 التعديل قيد التطوير', 'info');
 };
 
 window.deleteCurrency = async function(id) {
     if (!confirm('حذف العملة؟')) return;
     try {
-        await deleteDoc(doc(db, 'currencies', id));
+        await db.collection('currencies').doc(id).delete();
         showToast('✅ تم الحذف');
         loadCurrencies();
     } catch (error) {
@@ -200,9 +198,9 @@ window.deleteCurrency = async function(id) {
 // ==================== نسبة ربح VIP ====================
 async function loadVipProfit() {
     try {
-        const docRef = doc(db, 'vipSettings', 'default');
-        const docSnap = await getDoc(docRef);
-        let profitRate = docSnap.exists() ? docSnap.data().profitRate || 0 : 0;
+        const docRef = db.collection('vipSettings').doc('default');
+        const docSnap = await docRef.get();
+        let profitRate = docSnap.exists ? docSnap.data().profitRate || 0 : 0;
         
         const html = `
             <h3>📈 نسبة ربح VIP</h3>
@@ -219,7 +217,7 @@ async function loadVipProfit() {
 window.saveVipProfit = async function() {
     const rate = parseFloat(document.getElementById('vipRate')?.value) || 0;
     try {
-        await setDoc(doc(db, 'vipSettings', 'default'), { profitRate: rate }, { merge: true });
+        await db.collection('vipSettings').doc('default').set({ profitRate: rate }, { merge: true });
         showToast('✅ تم الحفظ');
         closeModal('vipModal');
     } catch (error) {
@@ -231,7 +229,7 @@ window.saveVipProfit = async function() {
 // ==================== سجل الأرباح ====================
 async function loadProfitLog() {
     try {
-        const ordersSnap = await getDocs(collection(db, 'orders'));
+        const ordersSnap = await db.collection('orders').get();
         let totalSales = 0, totalOrders = 0;
         ordersSnap.forEach(doc => {
             totalSales += doc.data().price || 0;
@@ -261,7 +259,7 @@ async function loadProfitLog() {
 // ==================== الرصيد المدين ====================
 async function loadDebtBalance() {
     try {
-        const usersSnap = await getDocs(collection(db, 'users'));
+        const usersSnap = await db.collection('users').get();
         let html = '<h3>💸 الرصيد المدين</h3>';
         html += '<table><tr><th>المستخدم</th><th>الرصيد</th><th>السماح</th><th>إجراءات</th></tr>';
         if (usersSnap.empty) {
@@ -288,8 +286,8 @@ async function loadDebtBalance() {
 }
 
 window.editDebtBalance = async function(userId) {
-    const userSnap = await getDoc(doc(db, 'users', userId));
-    if (!userSnap.exists()) return showToast('المستخدم غير موجود', 'error');
+    const userSnap = await db.collection('users').doc(userId).get();
+    if (!userSnap.exists) return showToast('المستخدم غير موجود', 'error');
     const u = userSnap.data();
     
     const form = `
@@ -310,7 +308,7 @@ window.updateDebtBalance = async function(userId) {
     const amount = parseFloat(document.getElementById('debtAmount')?.value) || 0;
     const allowed = document.getElementById('debtAllowed')?.value === 'true';
     try {
-        await updateDoc(doc(db, 'users', userId), { debtBalance: amount, allowedDebt: allowed });
+        await db.collection('users').doc(userId).update({ debtBalance: amount, allowedDebt: allowed });
         showToast('✅ تم التحديث');
         closeModal('debtModal');
         loadDebtBalance();
@@ -323,7 +321,7 @@ window.updateDebtBalance = async function(userId) {
 // ==================== المستخدمون الأكثر صرفاً ====================
 async function loadTopSpenders() {
     try {
-        const ordersSnap = await getDocs(collection(db, 'orders'));
+        const ordersSnap = await db.collection('orders').get();
         const userSpending = {};
         ordersSnap.forEach(doc => {
             const o = doc.data();
@@ -336,8 +334,8 @@ async function loadTopSpenders() {
             html += '<tr><td colspan="2" style="text-align:center;">لا توجد بيانات</td></tr>';
         } else {
             for (const [userId, total] of sorted) {
-                const userSnap = await getDoc(doc(db, 'users', userId));
-                const userName = userSnap.exists() ? (userSnap.data().name || userSnap.data().email) : 'غير معروف';
+                const userSnap = await db.collection('users').doc(userId).get();
+                const userName = userSnap.exists ? (userSnap.data().name || userSnap.data().email) : 'غير معروف';
                 html += `<tr><td>${userName}</td><td>${total.toFixed(2)}$</td></tr>`;
             }
         }
@@ -352,12 +350,12 @@ async function loadTopSpenders() {
 // ==================== وضع الصيانة ====================
 async function toggleMaintenance() {
     try {
-        const maintenanceRef = doc(db, 'settings', 'maintenance');
-        const docSnap = await getDoc(maintenanceRef);
-        const currentStatus = docSnap.exists() ? docSnap.data().enabled : false;
+        const maintenanceRef = db.collection('settings').doc('maintenance');
+        const docSnap = await maintenanceRef.get();
+        const currentStatus = docSnap.exists ? docSnap.data().enabled : false;
         const newStatus = !currentStatus;
         
-        await setDoc(maintenanceRef, { enabled: newStatus, updatedAt: new Date().toISOString() });
+        await maintenanceRef.set({ enabled: newStatus, updatedAt: new Date().toISOString() }, { merge: true });
         showToast(newStatus ? '🔧 وضع الصيانة مفعل' : '✅ وضع الصيانة معطل', 'info');
         const maintBtn = document.querySelector('.maintenance-toggle');
         if (maintBtn) maintBtn.textContent = newStatus ? 'تعطيل وضع الصيانة' : 'تفعيل وضع الصيانة';
@@ -405,21 +403,4 @@ export {
     toggleMaintenance
 };
 
-console.log('✅ admin-extras.js loaded successfully with all functions');
-// ربط دوال admin-extras.js بـ window
-window.loadPaymentMethods = loadPaymentMethods;
-window.loadCurrencies = loadCurrencies;
-window.loadVipProfit = loadVipProfit;
-window.loadProfitLog = loadProfitLog;
-window.loadDebtBalance = loadDebtBalance;
-window.loadTopSpenders = loadTopSpenders;
-window.toggleMaintenance = toggleMaintenance;
-window.showVipUsers = showVipUsers;
-window.showReferrals = showReferrals;
-window.showDesign = showDesign;
-window.showOrderMessages = showOrderMessages;
-window.showOrderManagement = showOrderManagement;
-window.showContactMethods = showContactMethods;
-window.showAdminAccounts = showAdminAccounts;
-window.showTwoFactor = showTwoFactor;
-console.log('✅ admin-extras.js تم تحميله بنجاح');
+console.log('✅ admin-extras.js loaded successfully with all functions (Firebase 8)');
