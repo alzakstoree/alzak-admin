@@ -1,28 +1,32 @@
-// ==================== admin-extras.js (معدل للإصدار 8) ====================
-import { db } from './firebase-config.js';
+// ==================== admin-extras.js (معدل لـ Supabase) ====================
+import { supabase } from './supabase-config.js';
 import { showToast, showModal, closeModal } from './helpers.js';
 
 // ==================== طرق الدفع ====================
 async function loadPaymentMethods() {
     try {
-        const querySnapshot = await db.collection('paymentMethods').get();
+        const { data: paymentMethods, error } = await supabase
+            .from('paymentMethods')
+            .select('*');
+        
+        if (error) throw error;
+        
         let html = '<h3>💳 طرق الدفع</h3>';
         html += '<button class="add-btn" onclick="showAddPaymentMethodModal()">➕ إضافة طريقة دفع جديدة</button>';
         html += '<div class="payment-methods-grid">';
         
-        if (querySnapshot.empty) {
+        if (!paymentMethods || paymentMethods.length === 0) {
             html += '<p style="text-align:center;">لا توجد طرق دفع مضافة بعد</p>';
         } else {
-            querySnapshot.forEach(doc => {
-                const m = doc.data();
+            paymentMethods.forEach(m => {
                 html += `
-                    <div class="payment-card" data-id="${doc.id}">
+                    <div class="payment-card" data-id="${m.id}">
                         <img src="${m.image || 'https://via.placeholder.com/80'}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #fbbf24;">
                         <div style="color:#fbbf24; font-weight:700; margin:5px 0;">${m.name}</div>
                         <div style="color:#888; font-size:12px;">${m.accountNumber || ''}</div>
                         <div style="margin-top:10px;">
-                            <button class="edit-btn" onclick="editPaymentMethod('${doc.id}')">✏️</button>
-                            <button class="delete-btn" onclick="deletePaymentMethod('${doc.id}')">🗑️</button>
+                            <button class="edit-btn" onclick="editPaymentMethod('${m.id}')">✏️</button>
+                            <button class="delete-btn" onclick="deletePaymentMethod('${m.id}')">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -56,13 +60,18 @@ window.savePaymentMethod = async function() {
     if (!name || !number) return showToast('الرجاء إدخال الاسم والرقم', 'error');
     
     try {
-        await db.collection('paymentMethods').add({ 
-            name, 
-            accountNumber: number, 
-            image: image || '', 
-            accountName: accountName || '',
-            createdAt: new Date().toISOString()
-        });
+        const { error } = await supabase
+            .from('paymentMethods')
+            .insert([{
+                name,
+                accountNumber: number,
+                image: image || '',
+                accountName: accountName || '',
+                createdAt: new Date().toISOString()
+            }]);
+        
+        if (error) throw error;
+        
         showToast('✅ تمت الإضافة');
         closeModal('paymentMethodsModal');
         loadPaymentMethods();
@@ -73,9 +82,13 @@ window.savePaymentMethod = async function() {
 };
 
 window.editPaymentMethod = async function(id) {
-    const docSnap = await db.collection('paymentMethods').doc(id).get();
-    if (!docSnap.exists) return showToast('غير موجود', 'error');
-    const m = docSnap.data();
+    const { data: m, error } = await supabase
+        .from('paymentMethods')
+        .select('*')
+        .eq('id', id)
+        .single();
+    
+    if (error || !m) return showToast('غير موجود', 'error');
     
     const form = `
         <h3>✏️ تعديل طريقة الدفع</h3>
@@ -96,7 +109,13 @@ window.updatePaymentMethod = async function(id) {
     if (!name || !number) return showToast('الرجاء إدخال الاسم والرقم', 'error');
     
     try {
-        await db.collection('paymentMethods').doc(id).update({ name, accountNumber: number, image, accountName });
+        const { error } = await supabase
+            .from('paymentMethods')
+            .update({ name, accountNumber: number, image, accountName })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showToast('✅ تم التحديث');
         closeModal('paymentMethodsModal');
         loadPaymentMethods();
@@ -109,7 +128,13 @@ window.updatePaymentMethod = async function(id) {
 window.deletePaymentMethod = async function(id) {
     if (!confirm('هل أنت متأكد من الحذف؟')) return;
     try {
-        await db.collection('paymentMethods').doc(id).delete();
+        const { error } = await supabase
+            .from('paymentMethods')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showToast('✅ تم الحذف');
         loadPaymentMethods();
     } catch (error) {
@@ -121,23 +146,27 @@ window.deletePaymentMethod = async function(id) {
 // ==================== العملات ====================
 async function loadCurrencies() {
     try {
-        const querySnapshot = await db.collection('currencies').get();
+        const { data: currencies, error } = await supabase
+            .from('currencies')
+            .select('*');
+        
+        if (error) throw error;
+        
         let html = '<h3>💰 العملات</h3>';
         html += '<button class="add-btn" onclick="showAddCurrencyModal()">➕ إضافة عملة</button>';
         html += '<table><tr><th>الاسم</th><th>الرمز</th><th>سعر الصرف</th><th>إجراءات</th></tr>';
-        if (querySnapshot.empty) {
+        if (!currencies || currencies.length === 0) {
             html += '<tr><td colspan="4" style="text-align:center;">لا توجد عملات</td></tr>';
         } else {
-            querySnapshot.forEach(doc => {
-                const c = doc.data();
+            currencies.forEach(c => {
                 html += `
                     <tr>
                         <td>${c.name}</td>
                         <td>${c.symbol}</td>
                         <td>${c.exchangeRate || 1}</td>
                         <td>
-                            <button class="edit-btn" onclick="editCurrency('${doc.id}')">✏️</button>
-                            <button class="delete-btn" onclick="deleteCurrency('${doc.id}')">🗑️</button>
+                            <button class="edit-btn" onclick="editCurrency('${c.id}')">✏️</button>
+                            <button class="delete-btn" onclick="deleteCurrency('${c.id}')">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -169,7 +198,12 @@ window.saveCurrency = async function() {
     if (!name || !symbol) return showToast('الرجاء إدخال الاسم والرمز', 'error');
     
     try {
-        await db.collection('currencies').add({ name, symbol, exchangeRate: rate, createdAt: new Date().toISOString() });
+        const { error } = await supabase
+            .from('currencies')
+            .insert([{ name, symbol, exchangeRate: rate, createdAt: new Date().toISOString() }]);
+        
+        if (error) throw error;
+        
         showToast('✅ تمت الإضافة');
         closeModal('currenciesModal');
         loadCurrencies();
@@ -186,7 +220,13 @@ window.editCurrency = async function(id) {
 window.deleteCurrency = async function(id) {
     if (!confirm('حذف العملة؟')) return;
     try {
-        await db.collection('currencies').doc(id).delete();
+        const { error } = await supabase
+            .from('currencies')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showToast('✅ تم الحذف');
         loadCurrencies();
     } catch (error) {
@@ -198,9 +238,14 @@ window.deleteCurrency = async function(id) {
 // ==================== نسبة ربح VIP ====================
 async function loadVipProfit() {
     try {
-        const docRef = db.collection('vipSettings').doc('default');
-        const docSnap = await docRef.get();
-        let profitRate = docSnap.exists ? docSnap.data().profitRate || 0 : 0;
+        const { data: settings, error } = await supabase
+            .from('vipSettings')
+            .select('profitRate')
+            .eq('id', 'default')
+            .maybeSingle();
+        
+        if (error) throw error;
+        let profitRate = settings?.profitRate || 0;
         
         const html = `
             <h3>📈 نسبة ربح VIP</h3>
@@ -217,7 +262,12 @@ async function loadVipProfit() {
 window.saveVipProfit = async function() {
     const rate = parseFloat(document.getElementById('vipRate')?.value) || 0;
     try {
-        await db.collection('vipSettings').doc('default').set({ profitRate: rate }, { merge: true });
+        const { error } = await supabase
+            .from('vipSettings')
+            .upsert({ id: 'default', profitRate: rate }, { onConflict: 'id' });
+        
+        if (error) throw error;
+        
         showToast('✅ تم الحفظ');
         closeModal('vipModal');
     } catch (error) {
@@ -229,10 +279,15 @@ window.saveVipProfit = async function() {
 // ==================== سجل الأرباح ====================
 async function loadProfitLog() {
     try {
-        const ordersSnap = await db.collection('orders').get();
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('price');
+        
+        if (error) throw error;
+        
         let totalSales = 0, totalOrders = 0;
-        ordersSnap.forEach(doc => {
-            totalSales += doc.data().price || 0;
+        orders.forEach(o => {
+            totalSales += o.price || 0;
             totalOrders++;
         });
         
@@ -259,20 +314,24 @@ async function loadProfitLog() {
 // ==================== الرصيد المدين ====================
 async function loadDebtBalance() {
     try {
-        const usersSnap = await db.collection('users').get();
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('name, email, debtBalance, allowedDebt');
+        
+        if (error) throw error;
+        
         let html = '<h3>💸 الرصيد المدين</h3>';
         html += '<table><tr><th>المستخدم</th><th>الرصيد</th><th>السماح</th><th>إجراءات</th></tr>';
-        if (usersSnap.empty) {
+        if (!users || users.length === 0) {
             html += '<tr><td colspan="4" style="text-align:center;">لا يوجد مستخدمين</td></tr>';
         } else {
-            usersSnap.forEach(doc => {
-                const u = doc.data();
+            users.forEach(u => {
                 html += `
                     <tr>
                         <td>${u.name || u.email}</td>
                         <td>${u.debtBalance || 0}$</td>
                         <td>${u.allowedDebt ? '✅' : '❌'}</td>
-                        <td><button class="edit-btn" onclick="editDebtBalance('${doc.id}')">✏️</button></td>
+                        <td><button class="edit-btn" onclick="editDebtBalance('${u.id}')">✏️</button></td>
                     </tr>
                 `;
             });
@@ -286,9 +345,13 @@ async function loadDebtBalance() {
 }
 
 window.editDebtBalance = async function(userId) {
-    const userSnap = await db.collection('users').doc(userId).get();
-    if (!userSnap.exists) return showToast('المستخدم غير موجود', 'error');
-    const u = userSnap.data();
+    const { data: u, error } = await supabase
+        .from('users')
+        .select('name, email, debtBalance, allowedDebt')
+        .eq('id', userId)
+        .single();
+    
+    if (error || !u) return showToast('المستخدم غير موجود', 'error');
     
     const form = `
         <h3>✏️ تعديل الرصيد المدين</h3>
@@ -308,7 +371,13 @@ window.updateDebtBalance = async function(userId) {
     const amount = parseFloat(document.getElementById('debtAmount')?.value) || 0;
     const allowed = document.getElementById('debtAllowed')?.value === 'true';
     try {
-        await db.collection('users').doc(userId).update({ debtBalance: amount, allowedDebt: allowed });
+        const { error } = await supabase
+            .from('users')
+            .update({ debtBalance: amount, allowedDebt: allowed })
+            .eq('id', userId);
+        
+        if (error) throw error;
+        
         showToast('✅ تم التحديث');
         closeModal('debtModal');
         loadDebtBalance();
@@ -321,10 +390,14 @@ window.updateDebtBalance = async function(userId) {
 // ==================== المستخدمون الأكثر صرفاً ====================
 async function loadTopSpenders() {
     try {
-        const ordersSnap = await db.collection('orders').get();
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('userId, price');
+        
+        if (error) throw error;
+        
         const userSpending = {};
-        ordersSnap.forEach(doc => {
-            const o = doc.data();
+        orders.forEach(o => {
             if (o.userId) userSpending[o.userId] = (userSpending[o.userId] || 0) + (o.price || 0);
         });
         
@@ -334,8 +407,13 @@ async function loadTopSpenders() {
             html += '<tr><td colspan="2" style="text-align:center;">لا توجد بيانات</td></tr>';
         } else {
             for (const [userId, total] of sorted) {
-                const userSnap = await db.collection('users').doc(userId).get();
-                const userName = userSnap.exists ? (userSnap.data().name || userSnap.data().email) : 'غير معروف';
+                const { data: user } = await supabase
+                    .from('users')
+                    .select('name, email')
+                    .eq('id', userId)
+                    .single();
+                
+                const userName = user ? (user.name || user.email) : 'غير معروف';
                 html += `<tr><td>${userName}</td><td>${total.toFixed(2)}$</td></tr>`;
             }
         }
@@ -350,12 +428,23 @@ async function loadTopSpenders() {
 // ==================== وضع الصيانة ====================
 async function toggleMaintenance() {
     try {
-        const maintenanceRef = db.collection('settings').doc('maintenance');
-        const docSnap = await maintenanceRef.get();
-        const currentStatus = docSnap.exists ? docSnap.data().enabled : false;
+        const { data: current, error: fetchError } = await supabase
+            .from('settings')
+            .select('enabled')
+            .eq('id', 'maintenance')
+            .maybeSingle();
+        
+        if (fetchError) throw fetchError;
+        
+        const currentStatus = current?.enabled || false;
         const newStatus = !currentStatus;
         
-        await maintenanceRef.set({ enabled: newStatus, updatedAt: new Date().toISOString() }, { merge: true });
+        const { error } = await supabase
+            .from('settings')
+            .upsert({ id: 'maintenance', enabled: newStatus, updatedAt: new Date().toISOString() });
+        
+        if (error) throw error;
+        
         showToast(newStatus ? '🔧 وضع الصيانة مفعل' : '✅ وضع الصيانة معطل', 'info');
         const maintBtn = document.querySelector('.maintenance-toggle');
         if (maintBtn) maintBtn.textContent = newStatus ? 'تعطيل وضع الصيانة' : 'تفعيل وضع الصيانة';
@@ -375,7 +464,7 @@ function showContactMethods() { showToast('🚧 وسائل التواصل قيد
 function showAdminAccounts() { showToast('🚧 حسابات الإدارة قيد التطوير', 'info'); }
 function showTwoFactor() { showToast('🚧 الحقوق بخطوتين قيد التطوير', 'info'); }
 
-// ==================== ربط جميع الدوال بـ window (الجزء الأهم) ====================
+// ==================== ربط جميع الدوال بـ window ====================
 window.loadPaymentMethods = loadPaymentMethods;
 window.loadCurrencies = loadCurrencies;
 window.loadVipProfit = loadVipProfit;
@@ -392,7 +481,7 @@ window.showContactMethods = showContactMethods;
 window.showAdminAccounts = showAdminAccounts;
 window.showTwoFactor = showTwoFactor;
 
-// ==================== تصدير الدوال (للاستخدام في admin.js إذا لزم الأمر) ====================
+// ==================== تصدير الدوال ====================
 export {
     loadPaymentMethods,
     loadCurrencies,
@@ -403,4 +492,4 @@ export {
     toggleMaintenance
 };
 
-console.log('✅ admin-extras.js loaded successfully with all functions (Firebase 8)');
+console.log('✅ admin-extras.js loaded successfully with all functions (Supabase)');
