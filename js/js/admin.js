@@ -498,3 +498,11 @@ window.calculateTotalUsers = calculateTotalUsers;
 window.calculateTotalUserBalance = calculateTotalUserBalance;
 window.calculateProcessedCharges = calculateProcessedCharges;
 window.calculateAllowedDebtUsers = calculateAllowedDebtUsers;
+// ربط دوال admin.js بـ window
+window.loadAdminProducts = loadAdminProducts;
+window.loadAdminOrders = loadAdminOrders;
+window.loadAdminCharges = loadAdminCharges;
+window.loadAdminUsers = loadAdminUsers;
+window.loadAdminStats = loadAdminStats;
+window.loadAdminDashboard = loadAdminDashboard;
+window.updateDashboardCards = updateDashboardCards;
