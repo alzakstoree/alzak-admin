@@ -422,3 +422,4 @@ window.showOrderManagement = showOrderManagement;
 window.showContactMethods = showContactMethods;
 window.showAdminAccounts = showAdminAccounts;
 window.showTwoFactor = showTwoFactor;
+console.log('✅ admin-extras.js تم تحميله بنجاح');
