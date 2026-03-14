@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>اختبار Firebase النهائي</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #0a0a0a; color: white; }
+        button { padding: 15px; background: #fbbf24; border: none; border-radius: 10px; font-size: 18px; margin: 10px; }
+        pre { background: #111; padding: 15px; border-radius: 10px; text-align: left; direction: ltr; }
+    </style>
+</head>
+<body>
+    <h1>🔥 اختبار الاتصال بقاعدة البيانات</h1>
+    <button onclick="testFirebase()">اضغط لاختبار Firebase</button>
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <!-- تحميل Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO_VTLgQkTOv_MkB0SEdSEYdRMi9IdMFA",
+            authDomain: "alzak-store-dea53.firebaseapp.com",
+            projectId: "alzak-store-dea53",
+            storageBucket: "alzak-store-dea53.firebasestorage.app",
+            messagingSenderId: "494547602038",
+            appId: "1:494547602038:web:f9f78605414173ae63ed57"
+        };
+
+        window.testFirebase = function() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'جاري الاتصال...';
+
+            try {
+                // تهيئة Firebase
+                firebase.initializeApp(firebaseConfig);
+                const db = firebase.firestore();
+
+                // محاولة جلب المستخدمين
+                db.collection('users').get().then((snapshot) => {
+                    resultDiv.innerHTML = `
+                        <p style="color: #22c55e;">✅ تم الاتصال بنجاح!</p>
+                        <p>عدد المستخدمين: ${snapshot.size}</p>
+                        <pre>${JSON.stringify(snapshot.docs.map(d => d.data()), null, 2)}</pre>
+                    `;
+                }).catch((error) => {
+                    resultDiv.innerHTML = `<p style="color: #ef4444;">❌ خطأ: ${error.message}</p>`;
+                });
+            } catch (e) {
+                resultDiv.innerHTML = `<p style="color: #ef4444;">❌ خطأ في التهيئة: ${e.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
