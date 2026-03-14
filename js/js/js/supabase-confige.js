@@ -13,3 +13,4 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // تصدير العميل لاستخدامه في الملفات الأخرى
 export { supabaseClient as supabase };
+console.log('✅ supabase-config.js: تم التهيئة', supabaseClient ? 'نجاح' : 'فشل');
