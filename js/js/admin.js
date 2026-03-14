@@ -1,15 +1,18 @@
-// ==================== admin.js (معدل للإصدار 8) ====================
-import { auth, db } from './firebase-config.js';
-import { isAdmin as checkIsAdmin, ADMIN_EMAIL } from './auth.js'; // استيراد isAdmin من auth
+// ==================== admin.js (معدل لـ Supabase) ====================
+// استيراد مكتبة supabase (يجب أن تكون محملة عبر CDN في HTML)
+// نستخدم الكائن العام supabase الذي تم إنشاؤه في supabase-config.js
+import { supabase } from './supabase-config.js';
+import { isAdmin as checkIsAdmin, ADMIN_EMAIL } from './auth.js';
 import { loadStoreData, saveStoreData } from './store-data.js';
 import { showToast } from './helpers.js';
 import { confirmCharge } from './wallet.js';
 
 let storeData = loadStoreData();
 
-// دالة التحقق (يمكن استخدام isAdmin من auth)
+// دالة التحقق من أن المستخدم الحالي هو المدير
 export function isAdmin() {
-    return auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
+    const user = supabase.auth.user();
+    return user && user.email === ADMIN_EMAIL;
 }
 
 // دالة تحميل جميع بيانات لوحة التحكم (تستدعى عند فتح الصفحة)
@@ -28,7 +31,7 @@ export async function loadAdminDashboard() {
     ]);
 }
 
-// (اختياري) يمكن ترك showAdminPanel إذا أردت استخدامها لعرض نافذة منبثقة، لكن في dashboard.html ستكون ظاهرة بشكل دائم.
+// (اختياري) يمكن ترك showAdminPanel إذا أردت استخدامها لعرض نافذة منبثقة
 window.showAdminPanel = function() {
     if (!isAdmin()) {
         showToast('غير مصرح لك بالدخول', 'error');
@@ -51,7 +54,7 @@ window.showAdminTab = function(tab) {
     if (tab === 'stats') loadAdminStats();
 };
 
-// ===== إدارة المنتجات (لا تعتمد على Firebase) =====
+// ===== إدارة المنتجات (لا تعتمد على قاعدة البيانات) =====
 function loadAdminProducts() {
     let html = '<h3>📦 إدارة المنتجات</h3>';
     
@@ -125,26 +128,30 @@ async function loadAdminOrders() {
     if (!isAdmin()) return;
     
     try {
-        const ordersRef = db.collection('orders').orderBy('createdAt', 'desc');
-        const querySnapshot = await ordersRef.get();
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('createdAt', { ascending: false });
+        
+        if (error) throw error;
+        
         let html = '<h3>📋 جميع الطلبات</h3>';
         
-        if (querySnapshot.empty) {
+        if (!orders || orders.length === 0) {
             html += '<p style="text-align: center;">لا توجد طلبات</p>';
         } else {
-            querySnapshot.forEach(doc => {
-                const o = doc.data();
+            orders.forEach(order => {
                 html += `
                     <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
-                        <div><strong>${o.product}</strong> - ${o.price}$</div>
-                        <div style="font-size: 12px;">المستخدم: ${o.userEmail}</div>
-                        <div style="font-size: 12px;">معرف: ${o.playerId || 'غير محدد'}</div>
-                        <div style="font-size: 10px; color: #666;">${new Date(o.createdAt).toLocaleString()}</div>
-                        <select id="order_${doc.id}" style="width: 100%; margin: 10px 0; padding: 8px; background: #333; color: #fff; border: 1px solid #fbbf24; border-radius: 5px;">
-                            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
-                            <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+                        <div><strong>${order.product}</strong> - ${order.price}$</div>
+                        <div style="font-size: 12px;">المستخدم: ${order.userEmail}</div>
+                        <div style="font-size: 12px;">معرف: ${order.playerId || 'غير محدد'}</div>
+                        <div style="font-size: 10px; color: #666;">${new Date(order.createdAt).toLocaleString()}</div>
+                        <select id="order_${order.id}" style="width: 100%; margin: 10px 0; padding: 8px; background: #333; color: #fff; border: 1px solid #fbbf24; border-radius: 5px;">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
                         </select>
-                        <button onclick="updateOrderStatus('${doc.id}')" style="width: 100%; background: #fbbf24; color: #000; border: none; padding: 8px; border-radius: 5px; font-weight: 700;">تحديث الحالة</button>
+                        <button onclick="updateOrderStatus('${order.id}')" style="width: 100%; background: #fbbf24; color: #000; border: none; padding: 8px; border-radius: 5px; font-weight: 700;">تحديث الحالة</button>
                     </div>
                 `;
             });
@@ -162,9 +169,13 @@ window.updateOrderStatus = async function(orderId) {
     if (!select) return;
     
     try {
-        await db.collection('orders').doc(orderId).update({
-            status: select.value
-        });
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: select.value })
+            .eq('id', orderId);
+        
+        if (error) throw error;
+        
         showToast('✅ تم التحديث');
         loadAdminOrders();
     } catch (error) {
@@ -178,25 +189,29 @@ async function loadAdminCharges() {
     if (!isAdmin()) return;
     
     try {
-        const chargesRef = db.collection('charges').orderBy('date', 'desc');
-        const querySnapshot = await chargesRef.get();
+        const { data: charges, error } = await supabase
+            .from('charges')
+            .select('*')
+            .order('date', { ascending: false });
+        
+        if (error) throw error;
+        
         let html = '<h3>💰 طلبات الشحن</h3>';
         
-        if (querySnapshot.empty) {
+        if (!charges || charges.length === 0) {
             html += '<p style="text-align: center;">لا توجد طلبات شحن</p>';
         } else {
-            querySnapshot.forEach(doc => {
-                const c = doc.data();
+            charges.forEach(charge => {
                 html += `
                     <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
-                        <div><strong>${c.userEmail}</strong></div>
-                        <div style="font-size: 18px; color: #fbbf24; font-weight: 900;">${c.amount}$</div>
-                        <div style="font-size: 10px; color: #666;">${new Date(c.date).toLocaleString()}</div>
+                        <div><strong>${charge.userEmail}</strong></div>
+                        <div style="font-size: 18px; color: #fbbf24; font-weight: 900;">${charge.amount}$</div>
+                        <div style="font-size: 10px; color: #666;">${new Date(charge.date).toLocaleString()}</div>
                         <div style="margin: 10px 0;">
-                            <span style="background: ${c.status === 'pending' ? '#fbbf24' : '#22c55e'}; color: #000; padding: 5px 10px; border-radius: 20px;">${c.status === 'pending' ? '⏳ قيد الانتظار' : '✅ مكتمل'}</span>
+                            <span style="background: ${charge.status === 'pending' ? '#fbbf24' : '#22c55e'}; color: #000; padding: 5px 10px; border-radius: 20px;">${charge.status === 'pending' ? '⏳ قيد الانتظار' : '✅ مكتمل'}</span>
                         </div>
-                        ${c.status === 'pending' ? 
-                            `<button onclick="confirmCharge('${doc.id}', '${c.userId}', ${c.amount})" style="width: 100%; background: #22c55e; color: #fff; border: none; padding: 10px; border-radius: 5px; font-weight: 700;">✅ تأكيد وصول المبلغ</button>` : 
+                        ${charge.status === 'pending' ? 
+                            `<button onclick="confirmCharge('${charge.id}', '${charge.userId}', ${charge.amount})" style="width: 100%; background: #22c55e; color: #fff; border: none; padding: 10px; border-radius: 5px; font-weight: 700;">✅ تأكيد وصول المبلغ</button>` : 
                             ''}
                     </div>
                 `;
@@ -214,7 +229,7 @@ async function loadAdminCharges() {
 window.confirmCharge = async function(chargeId, userId, amount) {
     if (!isAdmin()) return;
     await confirmCharge(chargeId, userId, amount);
-    loadAdminCharges(); // إعادة تحميل القائمة
+    loadAdminCharges();
 };
 
 // ===== إدارة العملاء =====
@@ -222,21 +237,25 @@ async function loadAdminUsers() {
     if (!isAdmin()) return;
     
     try {
-        const usersSnap = await db.collection('users').get();
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('*');
+        
+        if (error) throw error;
+        
         let html = '<h3>👥 العملاء</h3><table style="width: 100%; border-collapse: collapse;">';
         html += '<tr><th>الاسم</th><th>البريد</th><th>الرصيد</th><th>تاريخ التسجيل</th></tr>';
         
-        if (usersSnap.empty) {
+        if (!users || users.length === 0) {
             html += '<tr><td colspan="4" style="text-align: center;">لا يوجد عملاء</td></tr>';
         } else {
-            usersSnap.forEach(doc => {
-                const u = doc.data();
+            users.forEach(user => {
                 html += `
                     <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #333;">${u.name}</td>
-                        <td style="padding: 8px; border-bottom: 1px solid #333;">${u.email}</td>
-                        <td style="padding: 8px; border-bottom: 1px solid #333; color: #fbbf24;">${u.walletBalance || 0}$</td>
-                        <td style="padding: 8px; border-bottom: 1px solid #333; font-size: 10px;">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333;">${user.name}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333;">${user.email}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333; color: #fbbf24;">${user.walletBalance || 0}$</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333; font-size: 10px;">${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                     </tr>
                 `;
             });
@@ -255,22 +274,28 @@ async function loadAdminStats() {
     if (!isAdmin()) return;
     
     try {
-        const usersSnap = await db.collection('users').get();
-        const ordersSnap = await db.collection('orders').get();
+        const { count: usersCount, error: usersError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true });
+        
+        const { data: orders, error: ordersError } = await supabase
+            .from('orders')
+            .select('*');
+        
+        if (usersError || ordersError) throw usersError || ordersError;
         
         let totalOrders = 0, totalSales = 0, pendingOrders = 0;
-        ordersSnap.forEach(doc => {
-            const o = doc.data();
+        orders.forEach(order => {
             totalOrders++;
-            totalSales += o.price || 0;
-            if (o.status === 'pending') pendingOrders++;
+            totalSales += order.price || 0;
+            if (order.status === 'pending') pendingOrders++;
         });
         
         document.getElementById('adminStats').innerHTML = `
             <h3>📊 الإحصائيات</h3>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                 <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
-                    <div style="font-size: 32px; color: #fbbf24;">${usersSnap.size}</div>
+                    <div style="font-size: 32px; color: #fbbf24;">${usersCount}</div>
                     <div>العملاء</div>
                 </div>
                 <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
@@ -293,18 +318,15 @@ async function loadAdminStats() {
     }
 }
 
-// ===== دوال إضافية للإحصائيات الرئيسية (بنفس الطريقة) =====
+// ===== دوال إضافية للإحصائيات الرئيسية =====
 async function calculateTotalSales() {
-    const ordersSnap = await db.collection('orders').get();
-    let total = 0;
-    ordersSnap.forEach(doc => {
-        total += doc.data().price || 0;
-    });
-    return total;
+    const { data: orders, error } = await supabase.from('orders').select('price');
+    if (error) return 0;
+    return orders.reduce((acc, o) => acc + (o.price || 0), 0);
 }
 
 async function calculateTotalCost() {
-    // يمكن تعديلها حسب الحاجة
+    // حسب الحاجة
     return 0;
 }
 
@@ -315,12 +337,9 @@ async function calculateNetProfit() {
 }
 
 async function calculateTotalDebt() {
-    const usersSnap = await db.collection('users').get();
-    let totalDebt = 0;
-    usersSnap.forEach(doc => {
-        totalDebt += doc.data().debtBalance || 0;
-    });
-    return totalDebt;
+    const { data: users, error } = await supabase.from('users').select('debtBalance');
+    if (error) return 0;
+    return users.reduce((acc, u) => acc + (u.debtBalance || 0), 0);
 }
 
 async function calculateMonthlyOrders() {
@@ -328,54 +347,60 @@ async function calculateMonthlyOrders() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
     
-    const querySnapshot = await db.collection('orders')
-        .where('createdAt', '>=', startOfMonth)
-        .where('createdAt', '<=', endOfMonth)
-        .get();
-    return querySnapshot.size;
-}
-
-async function calculatePendingOrders() {
-    const querySnapshot = await db.collection('orders').where('status', '==', 'pending').get();
-    return querySnapshot.size;
-}
-
-function calculateActiveProducts() {
-    const storeData = loadStoreData();
-    let count = 0;
-    storeData.sections.forEach(section => {
-        section.categories.forEach(category => {
-            count += category.products.length;
-        });
-    });
+    const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('createdAt', startOfMonth)
+        .lte('createdAt', endOfMonth);
+    
+    if (error) return 0;
     return count;
 }
 
+async function calculatePendingOrders() {
+    const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+    
+    if (error) return 0;
+    return count;
+}
+
+function calculateActiveProducts() {
+    return storeData.sections.reduce((acc, s) => 
+        acc + s.categories.reduce((acc2, c) => acc2 + c.products.length, 0), 0);
+}
+
 async function calculateTotalUsers() {
-    const usersSnap = await db.collection('users').get();
-    return usersSnap.size;
+    const { count, error } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    if (error) return 0;
+    return count;
 }
 
 async function calculateTotalUserBalance() {
-    const usersSnap = await db.collection('users').get();
-    let total = 0;
-    usersSnap.forEach(doc => {
-        total += doc.data().walletBalance || 0;
-    });
-    return total;
+    const { data: users, error } = await supabase.from('users').select('walletBalance');
+    if (error) return 0;
+    return users.reduce((acc, u) => acc + (u.walletBalance || 0), 0);
 }
 
 async function calculateProcessedCharges() {
-    const querySnapshot = await db.collection('charges').where('status', '==', 'completed').get();
-    return querySnapshot.size;
+    const { count, error } = await supabase
+        .from('charges')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'completed');
+    
+    if (error) return 0;
+    return count;
 }
 
 async function calculateAllowedDebtUsers() {
-    const usersSnap = await db.collection('users').get();
-    let count = 0;
-    usersSnap.forEach(doc => {
-        if (doc.data().allowedDebt) count++;
-    });
+    const { count, error } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('allowedDebt', true);
+    
+    if (error) return 0;
     return count;
 }
 
@@ -391,7 +416,9 @@ export async function updateDashboardCards() {
     document.getElementById('totalUserBalance').textContent = (await calculateTotalUserBalance()).toFixed(2) + '$';
     document.getElementById('processedCharges').textContent = await calculateProcessedCharges();
     document.getElementById('allowedDebtUsers').textContent = await calculateAllowedDebtUsers();
-    document.getElementById('totalOrdersCount').textContent = (await db.collection('orders').get()).size;
+    
+    const { count, error } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+    document.getElementById('totalOrdersCount').textContent = error ? 0 : count;
     
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -429,7 +456,7 @@ window.calculateTotalUserBalance = calculateTotalUserBalance;
 window.calculateProcessedCharges = calculateProcessedCharges;
 window.calculateAllowedDebtUsers = calculateAllowedDebtUsers;
 
-// ===== دوال مؤقتة للقائمة الجانبية (سيتم استبدالها بـ admin-extras.js) =====
+// ===== دوال مؤقتة للقائمة الجانبية =====
 window.showPaymentMethods = function() { showToast('🚧 طرق الدفع قيد التطوير', 'info'); };
 window.showCurrencies = function() { showToast('🚧 العملات قيد التطوير', 'info'); };
 window.showVipProfit = function() { showToast('🚧 نسبة ربح VIP قيد التطوير', 'info'); };
