@@ -1,16 +1,15 @@
-// ==================== admin.js (معدل للوحة التحكم) ====================
-import { db } from './firebase-config.js';
-import { currentUser, ADMIN_EMAIL, isAdmin } from './auth.js'; // استيراد isAdmin من auth
-import { collection, getDocs, doc, updateDoc, query, orderBy, runTransaction, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// ==================== admin.js (معدل للإصدار 8) ====================
+import { auth, db } from './firebase-config.js';
+import { isAdmin as checkIsAdmin, ADMIN_EMAIL } from './auth.js'; // استيراد isAdmin من auth
 import { loadStoreData, saveStoreData } from './store-data.js';
-import { showToast } from './helpers.js'; // استيراد showToast
-import { confirmCharge } from './wallet.js'; // استيراد confirmCharge من wallet.js
+import { showToast } from './helpers.js';
+import { confirmCharge } from './wallet.js';
 
 let storeData = loadStoreData();
 
 // دالة التحقق (يمكن استخدام isAdmin من auth)
 export function isAdmin() {
-    return currentUser && currentUser.email === ADMIN_EMAIL;
+    return auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
 }
 
 // دالة تحميل جميع بيانات لوحة التحكم (تستدعى عند فتح الصفحة)
@@ -35,12 +34,10 @@ window.showAdminPanel = function() {
         showToast('غير مصرح لك بالدخول', 'error');
         return;
     }
-    // في dashboard.html، العنصر adminPanel هو الصفحة نفسها، لذا لا حاجة لإظهاره
-    // لكن نحتفظ بالدالة لتحميل البيانات
     loadAdminDashboard();
 };
 
-// التبديل بين التبويبات (كما هي)
+// التبديل بين التبويبات
 window.showAdminTab = function(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
@@ -54,7 +51,7 @@ window.showAdminTab = function(tab) {
     if (tab === 'stats') loadAdminStats();
 };
 
-// ===== إدارة المنتجات =====
+// ===== إدارة المنتجات (لا تعتمد على Firebase) =====
 function loadAdminProducts() {
     let html = '<h3>📦 إدارة المنتجات</h3>';
     
@@ -127,74 +124,90 @@ window.addProduct = function(s, c) {
 async function loadAdminOrders() {
     if (!isAdmin()) return;
     
-    const querySnapshot = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
-    let html = '<h3>📋 جميع الطلبات</h3>';
-    
-    if (querySnapshot.empty) {
-        html += '<p style="text-align: center;">لا توجد طلبات</p>';
-    } else {
-        querySnapshot.forEach(doc => {
-            const o = doc.data();
-            html += `
-                <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
-                    <div><strong>${o.product}</strong> - ${o.price}$</div>
-                    <div style="font-size: 12px;">المستخدم: ${o.userEmail}</div>
-                    <div style="font-size: 12px;">معرف: ${o.playerId || 'غير محدد'}</div>
-                    <div style="font-size: 10px; color: #666;">${new Date(o.createdAt).toLocaleString()}</div>
-                    <select id="order_${doc.id}" style="width: 100%; margin: 10px 0; padding: 8px; background: #333; color: #fff; border: 1px solid #fbbf24; border-radius: 5px;">
-                        <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
-                        <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
-                    </select>
-                    <button onclick="updateOrderStatus('${doc.id}')" style="width: 100%; background: #fbbf24; color: #000; border: none; padding: 8px; border-radius: 5px; font-weight: 700;">تحديث الحالة</button>
-                </div>
-            `;
-        });
+    try {
+        const ordersRef = db.collection('orders').orderBy('createdAt', 'desc');
+        const querySnapshot = await ordersRef.get();
+        let html = '<h3>📋 جميع الطلبات</h3>';
+        
+        if (querySnapshot.empty) {
+            html += '<p style="text-align: center;">لا توجد طلبات</p>';
+        } else {
+            querySnapshot.forEach(doc => {
+                const o = doc.data();
+                html += `
+                    <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
+                        <div><strong>${o.product}</strong> - ${o.price}$</div>
+                        <div style="font-size: 12px;">المستخدم: ${o.userEmail}</div>
+                        <div style="font-size: 12px;">معرف: ${o.playerId || 'غير محدد'}</div>
+                        <div style="font-size: 10px; color: #666;">${new Date(o.createdAt).toLocaleString()}</div>
+                        <select id="order_${doc.id}" style="width: 100%; margin: 10px 0; padding: 8px; background: #333; color: #fff; border: 1px solid #fbbf24; border-radius: 5px;">
+                            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+                            <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+                        </select>
+                        <button onclick="updateOrderStatus('${doc.id}')" style="width: 100%; background: #fbbf24; color: #000; border: none; padding: 8px; border-radius: 5px; font-weight: 700;">تحديث الحالة</button>
+                    </div>
+                `;
+            });
+        }
+        
+        document.getElementById('adminOrders').innerHTML = html;
+    } catch (error) {
+        console.error('خطأ في تحميل الطلبات:', error);
+        showToast('فشل تحميل الطلبات', 'error');
     }
-    
-    document.getElementById('adminOrders').innerHTML = html;
 }
 
 window.updateOrderStatus = async function(orderId) {
     const select = document.getElementById(`order_${orderId}`);
     if (!select) return;
     
-    await updateDoc(doc(db, 'orders', orderId), {
-        status: select.value
-    });
-    
-    showToast('✅ تم التحديث');
-    loadAdminOrders();
+    try {
+        await db.collection('orders').doc(orderId).update({
+            status: select.value
+        });
+        showToast('✅ تم التحديث');
+        loadAdminOrders();
+    } catch (error) {
+        console.error(error);
+        showToast('فشل التحديث', 'error');
+    }
 };
 
 // ===== إدارة طلبات الشحن =====
 async function loadAdminCharges() {
     if (!isAdmin()) return;
     
-    const querySnapshot = await getDocs(query(collection(db, 'charges'), orderBy('date', 'desc')));
-    let html = '<h3>💰 طلبات الشحن</h3>';
-    
-    if (querySnapshot.empty) {
-        html += '<p style="text-align: center;">لا توجد طلبات شحن</p>';
-    } else {
-        querySnapshot.forEach(doc => {
-            const c = doc.data();
-            html += `
-                <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
-                    <div><strong>${c.userEmail}</strong></div>
-                    <div style="font-size: 18px; color: #fbbf24; font-weight: 900;">${c.amount}$</div>
-                    <div style="font-size: 10px; color: #666;">${new Date(c.date).toLocaleString()}</div>
-                    <div style="margin: 10px 0;">
-                        <span style="background: ${c.status === 'pending' ? '#fbbf24' : '#22c55e'}; color: #000; padding: 5px 10px; border-radius: 20px;">${c.status === 'pending' ? '⏳ قيد الانتظار' : '✅ مكتمل'}</span>
+    try {
+        const chargesRef = db.collection('charges').orderBy('date', 'desc');
+        const querySnapshot = await chargesRef.get();
+        let html = '<h3>💰 طلبات الشحن</h3>';
+        
+        if (querySnapshot.empty) {
+            html += '<p style="text-align: center;">لا توجد طلبات شحن</p>';
+        } else {
+            querySnapshot.forEach(doc => {
+                const c = doc.data();
+                html += `
+                    <div style="background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px;">
+                        <div><strong>${c.userEmail}</strong></div>
+                        <div style="font-size: 18px; color: #fbbf24; font-weight: 900;">${c.amount}$</div>
+                        <div style="font-size: 10px; color: #666;">${new Date(c.date).toLocaleString()}</div>
+                        <div style="margin: 10px 0;">
+                            <span style="background: ${c.status === 'pending' ? '#fbbf24' : '#22c55e'}; color: #000; padding: 5px 10px; border-radius: 20px;">${c.status === 'pending' ? '⏳ قيد الانتظار' : '✅ مكتمل'}</span>
+                        </div>
+                        ${c.status === 'pending' ? 
+                            `<button onclick="confirmCharge('${doc.id}', '${c.userId}', ${c.amount})" style="width: 100%; background: #22c55e; color: #fff; border: none; padding: 10px; border-radius: 5px; font-weight: 700;">✅ تأكيد وصول المبلغ</button>` : 
+                            ''}
                     </div>
-                    ${c.status === 'pending' ? 
-                        `<button onclick="confirmCharge('${doc.id}', '${c.userId}', ${c.amount})" style="width: 100%; background: #22c55e; color: #fff; border: none; padding: 10px; border-radius: 5px; font-weight: 700;">✅ تأكيد وصول المبلغ</button>` : 
-                        ''}
-                </div>
-            `;
-        });
+                `;
+            });
+        }
+        
+        document.getElementById('adminCharges').innerHTML = html;
+    } catch (error) {
+        console.error('خطأ في تحميل طلبات الشحن:', error);
+        showToast('فشل تحميل طلبات الشحن', 'error');
     }
-    
-    document.getElementById('adminCharges').innerHTML = html;
 }
 
 // استخدام confirmCharge المستوردة من wallet.js
@@ -208,145 +221,81 @@ window.confirmCharge = async function(chargeId, userId, amount) {
 async function loadAdminUsers() {
     if (!isAdmin()) return;
     
-    const querySnapshot = await getDocs(collection(db, 'users'));
-    let html = '<h3>👥 العملاء</h3><table style="width: 100%; border-collapse: collapse;">';
-    html += '<tr><th>الاسم</th><th>البريد</th><th>الرصيد</th><th>تاريخ التسجيل</th></tr>';
-    
-    if (querySnapshot.empty) {
-        html += '<tr><td colspan="4" style="text-align: center;">لا يوجد عملاء</td></tr>';
-    } else {
-        querySnapshot.forEach(doc => {
-            const u = doc.data();
-            html += `
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #333;">${u.name}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #333;">${u.email}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #333; color: #fbbf24;">${u.walletBalance || 0}$</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #333; font-size: 10px;">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
-                </tr>
-            `;
-        });
+    try {
+        const usersSnap = await db.collection('users').get();
+        let html = '<h3>👥 العملاء</h3><table style="width: 100%; border-collapse: collapse;">';
+        html += '<tr><th>الاسم</th><th>البريد</th><th>الرصيد</th><th>تاريخ التسجيل</th></tr>';
+        
+        if (usersSnap.empty) {
+            html += '<tr><td colspan="4" style="text-align: center;">لا يوجد عملاء</td></tr>';
+        } else {
+            usersSnap.forEach(doc => {
+                const u = doc.data();
+                html += `
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #333;">${u.name}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333;">${u.email}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333; color: #fbbf24;">${u.walletBalance || 0}$</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #333; font-size: 10px;">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += '</table>';
+        document.getElementById('adminUsers').innerHTML = html;
+    } catch (error) {
+        console.error('خطأ في تحميل العملاء:', error);
+        showToast('فشل تحميل العملاء', 'error');
     }
-    
-    html += '</table>';
-    document.getElementById('adminUsers').innerHTML = html;
 }
 
 // ===== الإحصائيات =====
 async function loadAdminStats() {
     if (!isAdmin()) return;
     
-    const usersSnap = await getDocs(collection(db, 'users'));
-    const ordersSnap = await getDocs(collection(db, 'orders'));
-    
-    let totalOrders = 0, totalSales = 0, pendingOrders = 0;
-    ordersSnap.forEach(doc => {
-        const o = doc.data();
-        totalOrders++;
-        totalSales += o.price || 0;
-        if (o.status === 'pending') pendingOrders++;
-    });
-    
-    document.getElementById('adminStats').innerHTML = `
-        <h3>📊 الإحصائيات</h3>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-            <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; color: #fbbf24;">${usersSnap.size}</div>
-                <div>العملاء</div>
+    try {
+        const usersSnap = await db.collection('users').get();
+        const ordersSnap = await db.collection('orders').get();
+        
+        let totalOrders = 0, totalSales = 0, pendingOrders = 0;
+        ordersSnap.forEach(doc => {
+            const o = doc.data();
+            totalOrders++;
+            totalSales += o.price || 0;
+            if (o.status === 'pending') pendingOrders++;
+        });
+        
+        document.getElementById('adminStats').innerHTML = `
+            <h3>📊 الإحصائيات</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
+                    <div style="font-size: 32px; color: #fbbf24;">${usersSnap.size}</div>
+                    <div>العملاء</div>
+                </div>
+                <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
+                    <div style="font-size: 32px; color: #fbbf24;">${totalOrders}</div>
+                    <div>الطلبات</div>
+                </div>
+                <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
+                    <div style="font-size: 32px; color: #fbbf24;">${pendingOrders}</div>
+                    <div>قيد الانتظار</div>
+                </div>
+                <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
+                    <div style="font-size: 32px; color: #fbbf24;">${totalSales}$</div>
+                    <div>المبيعات</div>
+                </div>
             </div>
-            <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; color: #fbbf24;">${totalOrders}</div>
-                <div>الطلبات</div>
-            </div>
-            <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; color: #fbbf24;">${pendingOrders}</div>
-                <div>قيد الانتظار</div>
-            </div>
-            <div style="background: #1a1a1a; border-radius: 15px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; color: #fbbf24;">${totalSales}$</div>
-                <div>المبيعات</div>
-            </div>
-        </div>
-    `;
+        `;
+    } catch (error) {
+        console.error('خطأ في تحميل الإحصائيات:', error);
+        showToast('فشل تحميل الإحصائيات', 'error');
+    }
 }
 
-// استدعاء loadAdminDashboard عند تحميل الصفحة (إذا كنا في dashboard.html)
-// سيتم استدعاؤها من dashboard.js أو من HTML مباشرة
-// دالة لفتح نافذة منبثقة لإدارة طرق الدفع
-window.showPaymentMethods = function() {
-    // يمكن استخدام modal موجود أو إنشاء modal جديد
-    showToast('🚧 إدارة طرق الدفع قيد التطوير', 'info');
-};
-
-// دالة لإدارة العملات
-window.showCurrencies = function() {
-    showToast('🚧 إدارة العملات قيد التطوير', 'info');
-};
-
-// دالة لإدارة نسبة ربح VIP
-window.showVipProfit = function() {
-    showToast('🚧 نسبة ربح VIP قيد التطوير', 'info');
-};
-
-// دالة لعرض سجل الأرباح
-window.showProfitLog = function() {
-    showToast('🚧 سجل الأرباح قيد التطوير', 'info');
-};
-
-// دالة لإدارة الرصيد المدين
-window.showDebtBalance = function() {
-    showToast('🚧 الرصيد المدين قيد التطوير', 'info');
-};
-
-// دالة لعرض المستخدمين الأكثر صرفاً
-window.showTopSpenders = function() {
-    showToast('🚧 المستخدمون الأكثر صرفاً قيد التطوير', 'info');
-};
-
-// دالة لإدارة الدولاء (العملاء المميزين)
-window.showVipUsers = function() {
-    showToast('🚧 إدارة الدولاء قيد التطوير', 'info');
-};
-
-// دالة لإدارة الإجالات (الإحالات)
-window.showReferrals = function() {
-    showToast('🚧 الإجالات قيد التطوير', 'info');
-};
-
-// دالة لإدارة التصميم
-window.showDesign = function() {
-    showToast('🚧 إدارة التصميم قيد التطوير', 'info');
-};
-
-// دالة لإدارة رسائل الطلب والردود
-window.showOrderMessages = function() {
-    showToast('🚧 رسائل الطلب والردود قيد التطوير', 'info');
-};
-
-// دالة لإدارة الترتيب
-window.showOrderManagement = function() {
-    showToast('🚧 إدارة الترتيب قيد التطوير', 'info');
-};
-
-// دالة لإدارة وسائل التواصل
-window.showContactMethods = function() {
-    showToast('🚧 وسائل التواصل قيد التطوير', 'info');
-};
-
-// دالة لإدارة حسابات الإدارة
-window.showAdminAccounts = function() {
-    showToast('🚧 حسابات الإدارة قيد التطوير', 'info');
-};
-
-// دالة لإدارة الحقوق بخطوتين (2FA)
-window.showTwoFactor = function() {
-    showToast('🚧 الحقوق بخطوتين قيد التطوير', 'info');
-};
-// ==================== دوال إضافية للإحصائيات الرئيسية ====================
-
-// دالة لحساب إجمالي المبيعات
+// ===== دوال إضافية للإحصائيات الرئيسية (بنفس الطريقة) =====
 async function calculateTotalSales() {
-    const ordersSnap = await getDocs(collection(db, 'orders'));
+    const ordersSnap = await db.collection('orders').get();
     let total = 0;
     ordersSnap.forEach(doc => {
         total += doc.data().price || 0;
@@ -354,25 +303,19 @@ async function calculateTotalSales() {
     return total;
 }
 
-// دالة لحساب إجمالي التكلفة (مفترض أن لديك حقل cost في orders أو منتجات)
 async function calculateTotalCost() {
-    // إذا كان لديك حقل cost في كل طلب، استخدمه. وإلا يمكنك حسابه من المنتجات
-    const productsData = loadStoreData(); // من store-data.js
-    let totalCost = 0;
-    // هذا مثال، يمكن تعديله حسب هيكل بياناتك
-    return totalCost;
+    // يمكن تعديلها حسب الحاجة
+    return 0;
 }
 
-// دالة لحساب الأرباح الصافية (إجمالي المبيعات - التكلفة)
 async function calculateNetProfit() {
     const totalSales = await calculateTotalSales();
     const totalCost = await calculateTotalCost();
     return totalSales - totalCost;
 }
 
-// دالة لحساب إجمالي المبلغ المدين (إذا كان لديك حقل debtBalance في users)
 async function calculateTotalDebt() {
-    const usersSnap = await getDocs(collection(db, 'users'));
+    const usersSnap = await db.collection('users').get();
     let totalDebt = 0;
     usersSnap.forEach(doc => {
         totalDebt += doc.data().debtBalance || 0;
@@ -380,29 +323,23 @@ async function calculateTotalDebt() {
     return totalDebt;
 }
 
-// دالة لحساب عدد الطلبات هذا الشهر
 async function calculateMonthlyOrders() {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
     
-    const q = query(
-        collection(db, 'orders'),
-        where('createdAt', '>=', startOfMonth.toISOString()),
-        where('createdAt', '<=', endOfMonth.toISOString())
-    );
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await db.collection('orders')
+        .where('createdAt', '>=', startOfMonth)
+        .where('createdAt', '<=', endOfMonth)
+        .get();
     return querySnapshot.size;
 }
 
-// دالة لحساب عدد الطلبات قيد الانتظار
 async function calculatePendingOrders() {
-    const q = query(collection(db, 'orders'), where('status', '==', 'pending'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await db.collection('orders').where('status', '==', 'pending').get();
     return querySnapshot.size;
 }
 
-// دالة لحساب عدد المنتجات النشطة (من store-data.js)
 function calculateActiveProducts() {
     const storeData = loadStoreData();
     let count = 0;
@@ -414,15 +351,13 @@ function calculateActiveProducts() {
     return count;
 }
 
-// دالة لحساب عدد المستخدمين
 async function calculateTotalUsers() {
-    const usersSnap = await getDocs(collection(db, 'users'));
+    const usersSnap = await db.collection('users').get();
     return usersSnap.size;
 }
 
-// دالة لحساب إجمالي رصيد المستخدمين
 async function calculateTotalUserBalance() {
-    const usersSnap = await getDocs(collection(db, 'users'));
+    const usersSnap = await db.collection('users').get();
     let total = 0;
     usersSnap.forEach(doc => {
         total += doc.data().walletBalance || 0;
@@ -430,16 +365,13 @@ async function calculateTotalUserBalance() {
     return total;
 }
 
-// دالة لحساب عدد طلبات الشحن المعالجة (مكتملة)
 async function calculateProcessedCharges() {
-    const q = query(collection(db, 'charges'), where('status', '==', 'completed'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await db.collection('charges').where('status', '==', 'completed').get();
     return querySnapshot.size;
 }
 
-// دالة لحساب عدد المستخدمين المسموح لهم برصيد مدين (إذا كان لديك حقل allowedDebt)
 async function calculateAllowedDebtUsers() {
-    const usersSnap = await getDocs(collection(db, 'users'));
+    const usersSnap = await db.collection('users').get();
     let count = 0;
     usersSnap.forEach(doc => {
         if (doc.data().allowedDebt) count++;
@@ -447,7 +379,6 @@ async function calculateAllowedDebtUsers() {
     return count;
 }
 
-// دالة رئيسية لتحديث جميع البطاقات في الصفحة الرئيسية
 export async function updateDashboardCards() {
     document.getElementById('totalSales').textContent = (await calculateTotalSales()).toFixed(2) + '$';
     document.getElementById('totalCost').textContent = (await calculateTotalCost()).toFixed(2) + '$';
@@ -460,9 +391,8 @@ export async function updateDashboardCards() {
     document.getElementById('totalUserBalance').textContent = (await calculateTotalUserBalance()).toFixed(2) + '$';
     document.getElementById('processedCharges').textContent = await calculateProcessedCharges();
     document.getElementById('allowedDebtUsers').textContent = await calculateAllowedDebtUsers();
-    document.getElementById('totalOrdersCount').textContent = (await getDocs(collection(db, 'orders'))).size;
+    document.getElementById('totalOrdersCount').textContent = (await db.collection('orders').get()).size;
     
-    // تحديث نطاق الشهر (اختياري)
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -470,7 +400,6 @@ export async function updateDashboardCards() {
         `${lastDay.toLocaleDateString()} – ${firstDay.toLocaleDateString()}`;
 }
 
-// تعديل دالة loadAdminDashboard لتشمل تحديث البطاقات
 window.loadAdminDashboard = async function() {
     await updateDashboardCards();
     loadAdminProducts();
@@ -479,7 +408,8 @@ window.loadAdminDashboard = async function() {
     loadAdminUsers();
     loadAdminStats();
 };
-// ربط دوال الإدارة بـ window لتكون متاحة للأزرار
+
+// ===== ربط جميع الدوال بـ window =====
 window.loadAdminProducts = loadAdminProducts;
 window.loadAdminOrders = loadAdminOrders;
 window.loadAdminCharges = loadAdminCharges;
@@ -498,11 +428,19 @@ window.calculateTotalUsers = calculateTotalUsers;
 window.calculateTotalUserBalance = calculateTotalUserBalance;
 window.calculateProcessedCharges = calculateProcessedCharges;
 window.calculateAllowedDebtUsers = calculateAllowedDebtUsers;
-// ربط دوال admin.js بـ window
-window.loadAdminProducts = loadAdminProducts;
-window.loadAdminOrders = loadAdminOrders;
-window.loadAdminCharges = loadAdminCharges;
-window.loadAdminUsers = loadAdminUsers;
-window.loadAdminStats = loadAdminStats;
-window.loadAdminDashboard = loadAdminDashboard;
-window.updateDashboardCards = updateDashboardCards;
+
+// ===== دوال مؤقتة للقائمة الجانبية (سيتم استبدالها بـ admin-extras.js) =====
+window.showPaymentMethods = function() { showToast('🚧 طرق الدفع قيد التطوير', 'info'); };
+window.showCurrencies = function() { showToast('🚧 العملات قيد التطوير', 'info'); };
+window.showVipProfit = function() { showToast('🚧 نسبة ربح VIP قيد التطوير', 'info'); };
+window.showProfitLog = function() { showToast('🚧 سجل الأرباح قيد التطوير', 'info'); };
+window.showDebtBalance = function() { showToast('🚧 الرصيد المدين قيد التطوير', 'info'); };
+window.showTopSpenders = function() { showToast('🚧 المستخدمون الأكثر صرفاً قيد التطوير', 'info'); };
+window.showVipUsers = function() { showToast('🚧 إدارة الدولاء قيد التطوير', 'info'); };
+window.showReferrals = function() { showToast('🚧 الإجالات قيد التطوير', 'info'); };
+window.showDesign = function() { showToast('🚧 التصميم قيد التطوير', 'info'); };
+window.showOrderMessages = function() { showToast('🚧 رسائل الطلب قيد التطوير', 'info'); };
+window.showOrderManagement = function() { showToast('🚧 إدارة الترتيب قيد التطوير', 'info'); };
+window.showContactMethods = function() { showToast('🚧 وسائل التواصل قيد التطوير', 'info'); };
+window.showAdminAccounts = function() { showToast('🚧 حسابات الإدارة قيد التطوير', 'info'); };
+window.showTwoFactor = function() { showToast('🚧 الحقوق بخطوتين قيد التطوير', 'info'); };
