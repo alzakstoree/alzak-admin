@@ -406,3 +406,19 @@ export {
 };
 
 console.log('✅ admin-extras.js loaded successfully with all functions');
+// ربط دوال admin-extras.js بـ window
+window.loadPaymentMethods = loadPaymentMethods;
+window.loadCurrencies = loadCurrencies;
+window.loadVipProfit = loadVipProfit;
+window.loadProfitLog = loadProfitLog;
+window.loadDebtBalance = loadDebtBalance;
+window.loadTopSpenders = loadTopSpenders;
+window.toggleMaintenance = toggleMaintenance;
+window.showVipUsers = showVipUsers;
+window.showReferrals = showReferrals;
+window.showDesign = showDesign;
+window.showOrderMessages = showOrderMessages;
+window.showOrderManagement = showOrderManagement;
+window.showContactMethods = showContactMethods;
+window.showAdminAccounts = showAdminAccounts;
+window.showTwoFactor = showTwoFactor;
