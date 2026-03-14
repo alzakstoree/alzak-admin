@@ -479,3 +479,22 @@ window.loadAdminDashboard = async function() {
     loadAdminUsers();
     loadAdminStats();
 };
+// ربط دوال الإدارة بـ window لتكون متاحة للأزرار
+window.loadAdminProducts = loadAdminProducts;
+window.loadAdminOrders = loadAdminOrders;
+window.loadAdminCharges = loadAdminCharges;
+window.loadAdminUsers = loadAdminUsers;
+window.loadAdminStats = loadAdminStats;
+window.loadAdminDashboard = loadAdminDashboard;
+window.updateDashboardCards = updateDashboardCards;
+window.calculateTotalSales = calculateTotalSales;
+window.calculateTotalCost = calculateTotalCost;
+window.calculateNetProfit = calculateNetProfit;
+window.calculateTotalDebt = calculateTotalDebt;
+window.calculateMonthlyOrders = calculateMonthlyOrders;
+window.calculatePendingOrders = calculatePendingOrders;
+window.calculateActiveProducts = calculateActiveProducts;
+window.calculateTotalUsers = calculateTotalUsers;
+window.calculateTotalUserBalance = calculateTotalUserBalance;
+window.calculateProcessedCharges = calculateProcessedCharges;
+window.calculateAllowedDebtUsers = calculateAllowedDebtUsers;
