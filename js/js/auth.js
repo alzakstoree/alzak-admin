@@ -1,5 +1,5 @@
-// ==================== auth.js (معدل للإصدار 8) ====================
-import { auth, db } from './firebase-config.js';
+// ==================== auth.js (معدل لـ Supabase) ====================
+import { supabase } from './supabase-config.js';
 import { showToast } from './helpers.js';
 
 export let currentUser = null;
@@ -37,54 +37,85 @@ export function updateAdminUI() {
     }
 }
 
-// إنشاء ملف المستخدم
+// إنشاء ملف المستخدم (إدراج أو تحديث في جدول users)
 export async function createUserProfile(user) {
-    const userRef = db.collection('users').doc(user.uid);
-    const docSnap = await userRef.get();
-    if (!docSnap.exists) {
-        await userRef.set({
-            email: user.email,
-            name: user.displayName || user.email.split('@')[0],
-            createdAt: new Date().toISOString(),
-            walletBalance: 0
-        });
+    try {
+        const { error } = await supabase
+            .from('users')
+            .upsert({
+                id: user.id,                // معرف المستخدم من Supabase Auth
+                email: user.email,
+                name: user.user_metadata?.name || user.email.split('@')[0],
+                createdAt: new Date().toISOString(),
+                walletBalance: 0
+            }, { onConflict: 'id' });        // إذا كان موجوداً، تحديث
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error('خطأ في إنشاء ملف المستخدم:', error);
     }
 }
 
 // مراقبة حالة تسجيل الدخول
 export function initAuth() {
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
+    // الحصول على الجلسة الحالية
+    const session = supabase.auth.session();
+    if (session) {
+        const user = session.user;
+        currentUser = {
+            uid: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email.split('@')[0]
+        };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        createUserProfile(user).then(() => updateAdminUI());
+    } else {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        updateAdminUI();
+    }
+
+    // الاستماع لتغييرات المصادقة
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            const user = session.user;
             currentUser = {
-                uid: user.uid,
+                uid: user.id,
                 email: user.email,
-                name: user.displayName || user.email.split('@')[0]
+                name: user.user_metadata?.name || user.email.split('@')[0]
             };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await createUserProfile(user);
             updateAdminUI();
-        } else {
+        } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             localStorage.removeItem('currentUser');
             updateAdminUI();
         }
     });
+
+    // إرجاع دالة لإلغاء الاشتراك إذا لزم الأمر
+    return listener;
 }
 
 // تسجيل الخروج
 window.logout = async function() {
-    await auth.signOut();
-    showToast('✅ تم تسجيل الخروج');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        showToast('❌ فشل تسجيل الخروج', 'error');
+    } else {
+        showToast('✅ تم تسجيل الخروج');
+    }
 };
 
 // ===== دوال تسجيل الدخول (تستخدم في login.html) =====
 window.adminLogin = async function(email, password) {
     try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+        const { user, error } = await supabase.auth.signIn({ email, password });
+        if (error) throw error;
         
         if (user.email !== ADMIN_EMAIL) {
-            await auth.signOut();
+            await supabase.auth.signOut();
             showToast('❌ غير مصرح بالدخول إلى لوحة الإدارة', 'error');
             return false;
         }
@@ -100,36 +131,34 @@ window.adminLogin = async function(email, password) {
     }
 };
 
-// (اختياري) إذا أردت استخدام Google Sign-In في لوحة التحكم
+// تسجيل الدخول بـ Google
 window.loginWithGoogle = async function() {
     try {
-        const googleProvider = new auth.GoogleAuthProvider(); // في الإصدار 8، يتم إنشاء provider داخل الدالة
-        await auth.signInWithRedirect(googleProvider);
+        const { error } = await supabase.auth.signIn({ provider: 'google' });
+        if (error) throw error;
+        // بعد التوجيه، سيتم التعامل معه عبر onAuthStateChange
     } catch (error) {
         showToast('❌ ' + error.message, 'error');
     }
 };
 
-// معالجة نتيجة redirect
+// معالجة نتيجة redirect (قد تكون غير ضرورية مع Supabase)
 export async function handleRedirectResult() {
-    try {
-        const result = await auth.getRedirectResult();
-        if (result.user) {
-            const user = result.user;
-            if (user.email === ADMIN_EMAIL) {
-                window.location.href = 'dashboard.html';
-            } else {
-                await auth.signOut();
-                showToast('غير مصرح', 'error');
-            }
+    // Supabase يتعامل مع redirect تلقائياً، لكن يمكننا التحقق من الجلسة
+    const session = supabase.auth.session();
+    if (session) {
+        const user = session.user;
+        if (user.email === ADMIN_EMAIL) {
+            window.location.href = 'dashboard.html';
+        } else {
+            await supabase.auth.signOut();
+            showToast('غير مصرح', 'error');
         }
-    } catch (error) {
-        console.error('خطأ في redirect result:', error);
     }
 }
 
 // استدعاء initAuth عند تحميل الصفحة
 initAuth();
 
-// معالجة redirect إذا وجد
+// معالجة redirect إذا وجد (اختياري)
 handleRedirectResult();
