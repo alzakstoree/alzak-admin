@@ -276,17 +276,17 @@
     <div id="topSpendersModal" class="modal"><div class="modal-content" id="topSpendersModalContent"></div></div>
     <div id="genericModal" class="modal"><div class="modal-content" id="genericModalContent"></div></div>
 
-    <!-- استيراد مكتبات Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+    <!-- استيراد مكتبات Firebase (باستخدام الإصدار 8.10.1 الذي ثبت عمله) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- استيراد ملفات المشروع -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/helpers.js"></script>
     <script type="module" src="js/store-data.js"></script>
     <script type="module" src="js/admin.js"></script>
-    <script type="module" src="js/admin-extras.js"></script> <!-- الملف الجديد -->
+    <script type="module" src="js/admin-extras.js"></script>
 
     <script>
         // دالة فتح/إغلاق القائمة الجانبية
@@ -294,7 +294,7 @@
             document.getElementById('sideMenu').classList.toggle('show');
         };
 
-        // دالة مؤقتة للعناصر قيد التطوير (تستخدم showToast إذا كانت متوفرة)
+        // دالة مؤقتة للعناصر قيد التطوير
         window.showComingSoon = function(item) {
             if (window.showToast) {
                 window.showToast(`🚧 ${item} قيد التطوير`, 'info');
@@ -305,11 +305,9 @@
 
         // دالة showAdminTab (معدلة لتعمل بدون event)
         window.showAdminTab = function(tab) {
-            // إزالة active من جميع الأزرار والمحتويات
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
             
-            // تفعيل التبويب المحدد
             const buttons = document.querySelectorAll('.tab-btn');
             for (let btn of buttons) {
                 if (btn.textContent.includes(tab === 'products' ? 'المنتجات' :
@@ -323,7 +321,7 @@
             document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
         };
 
-        // دالة تحميل لوحة التحكم (تستدعي دوال admin.js إذا كانت موجودة)
+        // دالة تحميل لوحة التحكم
         window.loadAdminDashboard = function() {
             if (typeof loadAdminProducts === 'function') loadAdminProducts();
             if (typeof loadAdminOrders === 'function') loadAdminOrders();
