@@ -1,15 +1,6 @@
-// ==================== auth.js (معدل للوحة التحكم) ====================
-import { auth, googleProvider } from './firebase-config.js';
-import { 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged,
-    signInWithRedirect,
-    getRedirectResult
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from './firebase-config.js';
-import { showToast } from './helpers.js'; // استيراد showToast من helpers
+// ==================== auth.js (معدل للإصدار 8) ====================
+import { auth, db } from './firebase-config.js';
+import { showToast } from './helpers.js';
 
 export let currentUser = null;
 export const ADMIN_EMAIL = 'alolao45y@gmail.com';
@@ -46,12 +37,12 @@ export function updateAdminUI() {
     }
 }
 
-// إنشاء ملف المستخدم (نفس الكود)
+// إنشاء ملف المستخدم
 export async function createUserProfile(user) {
-    const userRef = doc(db, 'users', user.uid);
-    const docSnap = await getDoc(userRef);
-    if (!docSnap.exists()) {
-        await setDoc(userRef, {
+    const userRef = db.collection('users').doc(user.uid);
+    const docSnap = await userRef.get();
+    if (!docSnap.exists) {
+        await userRef.set({
             email: user.email,
             name: user.displayName || user.email.split('@')[0],
             createdAt: new Date().toISOString(),
@@ -60,9 +51,9 @@ export async function createUserProfile(user) {
     }
 }
 
-// مراقبة حالة تسجيل الدخول (معدلة)
+// مراقبة حالة تسجيل الدخول
 export function initAuth() {
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = {
                 uid: user.uid,
@@ -71,7 +62,7 @@ export function initAuth() {
             };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await createUserProfile(user);
-            updateAdminUI(); // تحديث واجهة المدير
+            updateAdminUI();
         } else {
             currentUser = null;
             localStorage.removeItem('currentUser');
@@ -82,19 +73,18 @@ export function initAuth() {
 
 // تسجيل الخروج
 window.logout = async function() {
-    await signOut(auth);
+    await auth.signOut();
     showToast('✅ تم تسجيل الخروج');
-    // التوجيه سيتم تلقائياً عبر onAuthStateChanged
 };
 
 // ===== دوال تسجيل الدخول (تستخدم في login.html) =====
 window.adminLogin = async function(email, password) {
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
         
         if (user.email !== ADMIN_EMAIL) {
-            await signOut(auth);
+            await auth.signOut();
             showToast('❌ غير مصرح بالدخول إلى لوحة الإدارة', 'error');
             return false;
         }
@@ -113,22 +103,23 @@ window.adminLogin = async function(email, password) {
 // (اختياري) إذا أردت استخدام Google Sign-In في لوحة التحكم
 window.loginWithGoogle = async function() {
     try {
-        await signInWithRedirect(auth, googleProvider);
+        const googleProvider = new auth.GoogleAuthProvider(); // في الإصدار 8، يتم إنشاء provider داخل الدالة
+        await auth.signInWithRedirect(googleProvider);
     } catch (error) {
         showToast('❌ ' + error.message, 'error');
     }
 };
 
-// معالجة نتيجة redirect (قد لا تحتاجها في لوحة التحكم)
+// معالجة نتيجة redirect
 export async function handleRedirectResult() {
     try {
-        const result = await getRedirectResult(auth);
-        if (result) {
+        const result = await auth.getRedirectResult();
+        if (result.user) {
             const user = result.user;
             if (user.email === ADMIN_EMAIL) {
                 window.location.href = 'dashboard.html';
             } else {
-                await signOut(auth);
+                await auth.signOut();
                 showToast('غير مصرح', 'error');
             }
         }
@@ -140,5 +131,5 @@ export async function handleRedirectResult() {
 // استدعاء initAuth عند تحميل الصفحة
 initAuth();
 
-// إذا كنت تريد معالجة redirect، يمكنك استدعاؤها هنا
+// معالجة redirect إذا وجد
 handleRedirectResult();
